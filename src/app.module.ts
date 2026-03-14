@@ -1,0 +1,54 @@
+import { APP_GUARD } from '@nestjs/core';
+import { HeaderAuthGuard } from './common/guards/header-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard'; // ✅ add
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { HelpRequestsModule } from './help-requests/help-requests.module';
+import { PointsModule } from './points/points.module';
+import { VolunteersModule } from './volunteers/volunteers.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+    }),
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const dbUrl = config.get<string>('DATABASE_URL');
+        if (!dbUrl) throw new Error('DATABASE_URL is not set');
+
+        console.log('DATABASE_URL host =', new URL(dbUrl).host);
+
+        const u = new URL(dbUrl);
+
+        return {
+          type: 'postgres',
+          host: u.hostname,
+          port: Number(u.port || 5432),
+          username: decodeURIComponent(u.username),
+          password: decodeURIComponent(u.password),
+          database: u.pathname.replace('/', '') || 'postgres',
+          ssl: { rejectUnauthorized: false },
+          extra: { ssl: { rejectUnauthorized: false } },
+          autoLoadEntities: true,
+          synchronize: false,
+        };
+      },
+    }),
+
+    VolunteersModule,
+    HelpRequestsModule,
+    PointsModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: HeaderAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard }, // ✅ add
+  ],
+})
+export class AppModule {}

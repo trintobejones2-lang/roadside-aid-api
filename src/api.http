@@ -1,0 +1,94 @@
+@base = http://127.0.0.1:3000
+@vol_id = 11111111-1111-1111-1111-111111111111
+@cus_id = 22222222-2222-2222-2222-222222222222
+
+### Health check
+GET {{base}}
+
+### Volunteer: set available
+POST {{base}}/volunteers/me/available
+x-user-id: {{vol_id}}
+x-role: volunteer
+Content-Type: application/json
+
+{
+  "isAvailable": true,
+  "lat": 40.71,
+  "lng": -74.0,
+  "serviceRadiusKm": 10
+}
+### Get help request by id (status/debug)
+GET {{base}}/help-requests/{{req_id}}
+x-user-id: {{cus_id}}
+x-role: customer
+
+### Customer: create help request
+# Copy the "id" from the response into @req_id below
+@req_id = 870e68a5-afed-4eeb-9291-7eaa7dd91ec9
+
+POST {{base}}/help-requests
+x-user-id: {{cus_id}}
+x-role: customer
+Content-Type: application/json
+
+{
+  "type": "TIRE",
+  "pickupLat": 40.7128,
+  "pickupLng": -74.0060,
+  "notes": "Rear tire flat"
+}
+
+### Volunteer: claim request
+POST {{base}}/help-requests/{{req_id}}/claim
+x-user-id: {{vol_id}}
+x-role: volunteer
+Content-Type: application/json
+
+{
+  "etaMinutes": 15
+}
+
+### Volunteer: EN_ROUTE
+POST {{base}}/help-requests/{{req_id}}/status
+x-user-id: {{vol_id}}
+x-role: volunteer
+Content-Type: application/json
+
+{
+  "status": "EN_ROUTE"
+}
+
+### Volunteer: ARRIVED
+POST {{base}}/help-requests/{{req_id}}/status
+x-user-id: {{vol_id}}
+x-role: volunteer
+Content-Type: application/json
+
+{
+  "status": "ARRIVED"
+}
+
+### Volunteer: COMPLETED
+POST {{base}}/help-requests/{{req_id}}/status
+x-user-id: {{vol_id}}
+x-role: volunteer
+Content-Type: application/json
+
+{
+  "status": "COMPLETED"
+}
+
+### Customer: confirm completion (awards points)
+POST {{base}}/help-requests/{{req_id}}/confirm
+x-user-id: {{cus_id}}
+x-role: customer
+
+### Volunteer: check rank / points
+GET {{base}}/me/rank
+x-user-id: {{vol_id}}
+x-role: volunteer
+
+### Leaderboard (weekly)
+GET {{base}}/leaderboard?timeframe=weekly
+x-user-id: {{vol_id}}
+x-role: volunteer
