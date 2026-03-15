@@ -15,7 +15,11 @@ async function bootstrap() {
     console.error('UNHANDLED REJECTION:', reason);
   });
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'https://roadside-3y0sne7pf-trintobejones2-langs-projects.vercel.app',
+    ],
     credentials: true,
   });
 
