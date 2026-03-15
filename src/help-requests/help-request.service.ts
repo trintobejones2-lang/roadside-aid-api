@@ -14,6 +14,7 @@ import { CreateHelpRequestDto } from './dto/create-help-request.dto';
 import { HelpRequest, HelpRequestStatus } from './help-request.entity';
 import { PointsService } from '../points/points.service';
 import { Volunteer } from '../volunteers/volunteer.entity';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 //CONSTRUCTOR// Helper to build map bounds from items
 @Injectable()
@@ -25,6 +26,7 @@ export class HelpRequestsService {
     @InjectRepository(Volunteer) private volRepo: Repository<Volunteer>,
     @InjectRepository(Confirmation) private confRepo: Repository<Confirmation>,
     private points: PointsService,
+    private realtime: RealtimeGateway,
   ) {}
   private isClaimStale(request: HelpRequest, staleMinutes = 15): boolean {
     if (!request.updatedAt) return false;
@@ -351,7 +353,12 @@ export class HelpRequestsService {
       notes: body.notes ?? null,
     });
 
-    return this.reqRepo.save(req);
+    const saved = await this.reqRepo.save(req);
+
+    // 🔴 broadcast new request to all volunteers
+    this.realtime.broadcastNewRequest(saved);
+
+    return saved;
   }
 
   // ----------------------------------------
@@ -394,6 +401,12 @@ export class HelpRequestsService {
 
       req.status = HelpRequestStatus.CLAIMED;
       await reqRepo.save(req);
+
+      this.realtime.broadcastClaim({
+        requestId,
+        claimId: claim.id,
+        status: req.status,
+      });
 
       return { requestId, claimId: claim.id, status: req.status };
     });

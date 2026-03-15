@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HelpRequestsModule } from './help-requests/help-requests.module';
 import { PointsModule } from './points/points.module';
 import { VolunteersModule } from './volunteers/volunteers.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { VolunteersModule } from './volunteers/volunteers.module';
     VolunteersModule,
     HelpRequestsModule,
     PointsModule,
+    RealtimeModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: HeaderAuthGuard },

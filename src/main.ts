@@ -15,15 +15,11 @@ async function bootstrap() {
     console.error('UNHANDLED REJECTION:', reason);
   });
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'https://roadside-3y0sne7pf-trintobejones2-langs-projects.vercel.app',
-    ],
+    origin: ['http://localhost:3000', 'http://localhost:3002', /\.vercel\.app$/],
     credentials: true,
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  await app.listen(3001);
+  await app.listen(process.env.PORT || 3001);
 }
 void bootstrap();
