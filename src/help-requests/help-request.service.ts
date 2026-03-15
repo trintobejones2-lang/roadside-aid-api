@@ -146,6 +146,11 @@ export class HelpRequestsService {
         await claimRepo.save(claim);
       }
 
+      this.realtime.broadcastStatusUpdated({
+        requestId: savedRequest.id,
+        status: savedRequest.status,
+      });
+
       return {
         data: savedRequest,
       };

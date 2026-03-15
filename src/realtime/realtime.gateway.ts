@@ -17,4 +17,8 @@ export class RealtimeGateway {
   broadcastClaim(request: any) {
     this.server.emit('request_claimed', request);
   }
+
+  broadcastStatusUpdated(request: any) {
+    this.server.emit('request_status_updated', request);
+  }
 }
