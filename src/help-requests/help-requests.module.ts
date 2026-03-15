@@ -7,9 +7,14 @@ import { Volunteer } from '../volunteers/volunteer.entity';
 import { HelpRequestsController } from './help-requests.controller';
 import { HelpRequestsService } from './help-request.service';
 import { PointsModule } from '../points/points.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([HelpRequest, Claim, Confirmation, Volunteer]), PointsModule],
+  imports: [
+    TypeOrmModule.forFeature([HelpRequest, Claim, Confirmation, Volunteer]),
+    PointsModule,
+    RealtimeModule,
+  ],
   controllers: [HelpRequestsController],
   providers: [HelpRequestsService],
 })
