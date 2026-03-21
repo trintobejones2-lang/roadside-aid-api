@@ -8,12 +8,14 @@ import { HelpRequestsController } from './help-requests.controller';
 import { HelpRequestsService } from './help-request.service';
 import { PointsModule } from '../points/points.module';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([HelpRequest, Claim, Confirmation, Volunteer]),
     PointsModule,
     RealtimeModule,
+    QueueModule,
   ],
   controllers: [HelpRequestsController],
   providers: [HelpRequestsService],

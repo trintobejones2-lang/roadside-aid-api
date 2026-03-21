@@ -23,6 +23,31 @@ export class VolunteersService {
         isAvailable: v.isAvailable,
       }));
   }
+  async getMe(userId: string) {
+    let v = await this.repo.findOne({ where: { userId } });
+
+    if (!v) {
+      v = this.repo.create({
+        userId,
+        isAvailable: false,
+      });
+
+      v = await this.repo.save(v);
+    }
+
+    return {
+      id: v.id,
+      userId: v.userId,
+      isAvailable: v.isAvailable,
+      fuelRegular: v.fuelRegular,
+      fuelDiesel: v.fuelDiesel,
+      lastLat: v.lastLat != null ? Number(v.lastLat) : null,
+      lastLng: v.lastLng != null ? Number(v.lastLng) : null,
+      serviceRadiusKm: v.serviceRadiusKm,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    };
+  }
   async setAvailability(userId: string, body: SetVolunteerAvailabilityDto) {
     let v = await this.repo.findOne({ where: { userId } });
     if (!v) v = this.repo.create({ userId });
@@ -54,7 +79,13 @@ export class VolunteersService {
       }
       v.serviceRadiusKm = body.serviceRadiusKm;
     }
+    if (body.fuelRegular !== undefined) {
+      v.fuelRegular = body.fuelRegular;
+    }
 
+    if (body.fuelDiesel !== undefined) {
+      v.fuelDiesel = body.fuelDiesel;
+    }
     return this.repo.save(v);
   }
 

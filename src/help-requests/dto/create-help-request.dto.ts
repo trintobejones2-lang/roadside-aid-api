@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
-import { HelpType } from '../help-request.entity';
+import { FuelType, HelpType } from '../help-request.entity';
 
 export class CreateHelpRequestDto {
   @IsEnum(HelpType)
@@ -18,4 +18,8 @@ export class CreateHelpRequestDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsEnum(FuelType)
+  fuelType?: FuelType;
 }

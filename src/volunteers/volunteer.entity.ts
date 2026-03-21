@@ -19,6 +19,12 @@ export class Volunteer {
   @Column({ type: 'boolean', default: false })
   isAvailable: boolean;
 
+  @Column({ name: 'fuel_regular', type: 'boolean', default: false })
+  fuelRegular: boolean;
+
+  @Column({ name: 'fuel_diesel', type: 'boolean', default: false })
+  fuelDiesel: boolean;
+
   @Column({ type: 'numeric', nullable: true })
   lastLat: string | null;
 

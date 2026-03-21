@@ -15,6 +15,7 @@ import { HelpRequest, HelpRequestStatus } from './help-request.entity';
 import { PointsService } from '../points/points.service';
 import { Volunteer } from '../volunteers/volunteer.entity';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { DispatchQueue } from '../queue/dispatch.queue';
 
 //CONSTRUCTOR// Helper to build map bounds from items
 @Injectable()
@@ -27,6 +28,7 @@ export class HelpRequestsService {
     @InjectRepository(Confirmation) private confRepo: Repository<Confirmation>,
     private points: PointsService,
     private realtime: RealtimeGateway,
+    private dispatchQueue: DispatchQueue,
   ) {}
   private isClaimStale(request: HelpRequest, staleMinutes = 15): boolean {
     if (!request.updatedAt) return false;
@@ -151,6 +153,11 @@ export class HelpRequestsService {
         status: savedRequest.status,
       });
 
+      await this.dispatchQueue.addStatusUpdateJob({
+        requestId: savedRequest.id,
+        status: savedRequest.status,
+      });
+
       return {
         data: savedRequest,
       };
@@ -249,7 +256,6 @@ export class HelpRequestsService {
       order: { createdAt: 'DESC' },
       take: 200,
     });
-
     const filtered = open
       .map((r) => {
         const lat = Number(r.pickupLat);
@@ -356,12 +362,17 @@ export class HelpRequestsService {
       pickupLng: String(body.pickupLng),
       pickupAddress: body.pickupAddress ?? null,
       notes: body.notes ?? null,
+      fuelType: body.fuelType ?? null,
     });
 
     const saved = await this.reqRepo.save(req);
 
-    // 🔴 broadcast new request to all volunteers
     this.realtime.broadcastNewRequest(saved);
+    await this.dispatchQueue.addNewRequestJob({
+      requestId: saved.id,
+      type: saved.type,
+      requesterId: saved.requesterId,
+    });
 
     return saved;
   }
@@ -406,6 +417,10 @@ export class HelpRequestsService {
 
       req.status = HelpRequestStatus.CLAIMED;
       await reqRepo.save(req);
+
+      // automatically set volunteer offline after accepting a job
+      v.isAvailable = false;
+      await volRepo.save(v);
 
       this.realtime.broadcastClaim({
         requestId,
@@ -464,6 +479,28 @@ export class HelpRequestsService {
 
       if (status === HelpRequestStatus.COMPLETED) {
         request.completedAt = new Date();
+
+        const claim = await claimRepo.findOne({
+          where: { requestId: id },
+        });
+
+        if (claim) {
+          const volunteer = await this.volRepo.findOne({
+            where: { id: claim.volunteerId },
+          });
+
+          if (volunteer) {
+            volunteer.isAvailable = true;
+            await this.volRepo.save(volunteer);
+
+            console.log(
+              'updateStatus set volunteer back online:',
+              volunteer.id,
+              volunteer.userId,
+              volunteer.isAvailable,
+            );
+          }
+        }
       }
 
       const savedRequest = await reqRepo.save(request);

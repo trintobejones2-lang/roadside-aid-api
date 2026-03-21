@@ -22,4 +22,12 @@ export class SetVolunteerAvailabilityDto {
   @Min(1)
   @Max(200)
   serviceRadiusKm?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  fuelRegular?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  fuelDiesel?: boolean;
 }

@@ -17,11 +17,18 @@ export class VolunteersController {
     return this.volunteersService.getActiveMapVolunteers();
   }
 
+  @Get('me')
+  @Roles('volunteer')
+  getMe(@ReqUser() user: RequestUser) {
+    return this.volunteersService.getMe(user.userId);
+  }
+
   @Post('me')
   @Roles('volunteer')
   setAvailability(@ReqUser() user: RequestUser, @Body() dto: SetVolunteerAvailabilityDto) {
     return this.volunteersService.setAvailability(user.userId, dto);
   }
+
   @Post('location')
   @Roles('volunteer')
   updateLocation(@ReqUser() user: RequestUser, @Body() body: { lat: number; lng: number }) {

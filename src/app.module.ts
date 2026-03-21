@@ -9,14 +9,17 @@ import { HelpRequestsModule } from './help-requests/help-requests.module';
 import { PointsModule } from './points/points.module';
 import { VolunteersModule } from './volunteers/volunteers.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { QueueModule } from './queue/queue.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
+    NotificationsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
-
+    QueueModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

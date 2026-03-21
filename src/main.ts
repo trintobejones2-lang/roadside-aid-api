@@ -14,12 +14,23 @@ async function bootstrap() {
   process.on('unhandledRejection', (reason) => {
     console.error('UNHANDLED REJECTION:', reason);
   });
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002', /\.vercel\.app$/],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://192.168.4.26:3000',
+      /\.vercel\.app$/,
+    ],
     credentials: true,
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  await app.listen(process.env.PORT || 3001);
+
+  const port = process.env.PORT || 3001;
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`API running on port ${port}`);
 }
+
 void bootstrap();

@@ -15,6 +15,10 @@ export enum HelpType {
   LOCKOUT = 'LOCKOUT',
   OTHER = 'OTHER',
 }
+export enum FuelType {
+  REGULAR = 'REGULAR',
+  DIESEL = 'DIESEL',
+}
 export enum HelpRequestStatus {
   OPEN = 'OPEN',
   CLAIMED = 'CLAIMED',
@@ -37,6 +41,15 @@ export class HelpRequest {
 
   @Column({ type: 'enum', enum: HelpType })
   type: HelpType;
+
+  @Column({
+    name: 'fuel_type',
+    type: 'enum',
+    enum: FuelType,
+    enumName: 'fuel_type_enum',
+    nullable: true,
+  })
+  fuelType: FuelType | null;
 
   @Index()
   @Column({ type: 'enum', enum: HelpRequestStatus, default: HelpRequestStatus.OPEN })
