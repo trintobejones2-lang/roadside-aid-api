@@ -17,14 +17,18 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
 
     BullModule.forRoot({
-      connection: {
-        host: '127.0.0.1',
-        port: 6379,
-      },
+      connection: process.env.REDIS_URL
+        ? { url: process.env.REDIS_URL }
+        : {
+            host: '127.0.0.1',
+            port: 6379,
+          },
     }),
+
     BullModule.registerQueue({
       name: 'dispatch',
     }),
+
     TypeOrmModule.forFeature([Volunteer, HelpRequest, DispatchOffer, Claim]),
     RealtimeModule,
   ],
