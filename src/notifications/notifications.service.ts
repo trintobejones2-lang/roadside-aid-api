@@ -62,6 +62,10 @@ export class NotificationsService {
 
     for (const sub of subs) {
       try {
+        console.log('Sending push notification to subscription:', {
+          userId,
+          endpoint: sub.endpoint,
+        });
         await webPush.sendNotification(
           {
             endpoint: sub.endpoint,
