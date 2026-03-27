@@ -17,16 +17,25 @@ export class RolesGuard implements CanActivate {
         context.getClass(),
       ]) ?? [];
 
+    const req = context.switchToHttp().getRequest<AuthedRequest>();
+
+    const canRequestHelp = req.user?.canRequestHelp;
+    const canVolunteer = req.user?.canVolunteer;
+
+    console.log('ROLES GUARD requiredRoles:', requiredRoles);
+    console.log('ROLES GUARD canRequestHelp:', canRequestHelp);
+    console.log('ROLES GUARD canVolunteer:', canVolunteer);
+
     if (requiredRoles.length === 0) return true;
 
-    const req = context.switchToHttp().getRequest<AuthedRequest>();
-    const role = req.user?.role;
-
-    if (!role) throw new ForbiddenException('Missing role');
-    if (!requiredRoles.includes(role)) {
-      throw new ForbiddenException('Insufficient role');
+    if (requiredRoles.includes('driver') && canRequestHelp) {
+      return true;
     }
 
-    return true;
+    if (requiredRoles.includes('volunteer') && canVolunteer) {
+      return true;
+    }
+
+    throw new ForbiddenException('Insufficient permissions');
   }
 }

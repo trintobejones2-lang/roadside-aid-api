@@ -14,7 +14,7 @@ export class HelpRequestsController {
   constructor(private service: HelpRequestsService) {}
 
   @Post()
-  @Roles('user')
+  @Roles('driver')
   create(@ReqUser() user: RequestUser, @Body() body: CreateHelpRequestDto) {
     return this.service.createRequest(user.userId, body);
   }
@@ -36,7 +36,7 @@ export class HelpRequestsController {
   }
 
   @Get('mine')
-  @Roles('user')
+  @Roles('driver')
   mine(@ReqUser() user: RequestUser, @Query('page') page?: string, @Query('limit') limit?: string) {
     return this.service.listMine(user.userId, page ? Number(page) : 1, limit ? Number(limit) : 20);
   }
@@ -79,13 +79,18 @@ export class HelpRequestsController {
   ) {
     return this.service.updateStatus(id, body.status);
   }
+  @Post(':id/arrive')
+  @Roles('volunteer')
+  arrive(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.service.markArrived(id, user.userId);
+  }
   @Post(':id/cancel')
-  @Roles('user')
+  @Roles('driver')
   cancel(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.cancelRequest(id, user.userId);
   }
   @Post(':id/confirm')
-  @Roles('user')
+  @Roles('driver')
   confirm(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.confirm(id, user.userId);
   }

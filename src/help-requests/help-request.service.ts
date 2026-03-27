@@ -545,6 +545,25 @@ export class HelpRequestsService {
       };
     });
   }
+  async markArrived(id: string, volunteerUserId: string) {
+    const volunteer = await this.volRepo.findOne({
+      where: { userId: volunteerUserId },
+    });
+
+    if (!volunteer) {
+      throw new ForbiddenException('Not a volunteer');
+    }
+
+    const claim = await this.claimRepo.findOne({
+      where: { requestId: id, volunteerId: volunteer.id },
+    });
+
+    if (!claim) {
+      throw new ForbiddenException('You are not assigned to this request');
+    }
+
+    return this.updateStatus(id, HelpRequestStatus.ARRIVED);
+  }
   // ----------------------------------------
   // Confirm Completion (Requester)
   // ----------------------------------------
