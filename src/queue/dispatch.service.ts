@@ -73,7 +73,40 @@ export class DispatchService {
       if (request.status !== HelpRequestStatus.OPEN) {
         throw new ConflictException('Request is no longer available');
       }
+      // ✅ Prevent volunteer from accepting their own request
+      if (request.requesterId === volunteerUserId) {
+        throw new ForbiddenException('You cannot accept your own request');
+      }
+      // ✅ ANTI-CHEAT #3 — Location check (volunteer must be within 50 miles)
+      if (
+        volunteer.lastLat != null &&
+        volunteer.lastLng != null &&
+        request.pickupLat != null &&
+        request.pickupLng != null
+      ) {
+        const toRad = (d: number) => (d * Math.PI) / 180;
+        const R = 3958.8;
 
+        const lat1 = Number(volunteer.lastLat);
+        const lng1 = Number(volunteer.lastLng);
+        const lat2 = Number(request.pickupLat);
+        const lng2 = Number(request.pickupLng);
+
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+
+        const distanceMiles = 2 * R * Math.asin(Math.sqrt(a));
+
+        if (distanceMiles > 50) {
+          throw new ForbiddenException(
+            `You are too far away to accept this request (${distanceMiles.toFixed(1)} miles)`,
+          );
+        }
+      }
       // 4) Accept this offer
       offer.status = DispatchOfferStatus.ACCEPTED;
       await offerRepo.save(offer);
