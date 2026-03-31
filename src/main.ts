@@ -21,6 +21,8 @@ async function bootstrap() {
       'http://localhost:3002',
       'http://192.168.4.26:3000',
       /\.vercel\.app$/,
+      'https://roadsideaid.app',
+      'https://www.roadsideaid.app',
     ],
     credentials: true,
   });
