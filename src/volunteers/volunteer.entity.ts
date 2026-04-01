@@ -39,5 +39,4 @@ export class Volunteer {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
-  static updatedAt: any;
 }

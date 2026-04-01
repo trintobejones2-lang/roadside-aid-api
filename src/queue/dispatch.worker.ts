@@ -53,8 +53,16 @@ export class DispatchWorker extends WorkerHost {
   private async createOffersForRequest(request: HelpRequest) {
     console.log('Creating dispatch offers for request:', request.id);
 
-    const volunteers = await this.volunteerRepo.find({
-      where: { isAvailable: true },
+    const freshCutoff = new Date(Date.now() - 5 * 60 * 1000);
+
+    const volunteers = await this.volunteerRepo
+      .createQueryBuilder('volunteer')
+      .where('volunteer.isAvailable = :isAvailable', { isAvailable: true })
+      .andWhere('volunteer.updatedAt >= :freshCutoff', { freshCutoff })
+      .getMany();
+    console.log('Volunteer freshness filter:', {
+      freshCutoff,
+      candidateCount: volunteers.length,
     });
 
     console.log(
@@ -232,36 +240,16 @@ export class DispatchWorker extends WorkerHost {
         }
 
         if (existingOffer && existingOffer.status === DispatchOfferStatus.EXPIRED) {
-          existingOffer.status = DispatchOfferStatus.PENDING;
-          existingOffer.expiresAt = new Date(Date.now() + 30 * 1000);
-
-          await this.dispatchOfferRepo.save(existingOffer);
-
-          await this.notificationsService.sendToUser(volunteer.userId, {
-            title: 'RoadsideAid',
-            body: `New ${request.type} request nearby. Tap to open offers.`,
-            url: '/open-requests',
-          });
-
-          createdOffers += 1;
-          await this.dispatchQueue.addOfferTimeoutJob(existingOffer.id, existingOffer.requestId);
-
-          console.log('Dispatch offer reactivated:', {
-            offerId: existingOffer.id,
+          console.log('Volunteer already had an expired offer for this request, skipping:', {
             requestId: existingOffer.requestId,
             volunteerId: existingOffer.volunteerId,
+            offerId: existingOffer.id,
             status: existingOffer.status,
-            expiresAt: existingOffer.expiresAt,
-          });
-
-          this.realtime.server.emit('dispatch_offer_created', {
-            offerId: existingOffer.id,
-            requestId: existingOffer.requestId,
-            volunteerId: existingOffer.volunteerId,
           });
 
           continue;
         }
+
         const expiresAt = new Date(Date.now() + 30 * 1000);
 
         const offer = this.dispatchOfferRepo.create({
