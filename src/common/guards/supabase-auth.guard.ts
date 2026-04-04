@@ -1,35 +1,25 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { Request } from 'express';
+import jwt from 'jsonwebtoken';
 
 type AuthedRequest = Request & {
-  user?: { userId: string };
+  user?: {
+    userId: string;
+    canRequestHelp: boolean;
+    canVolunteer: boolean;
+  };
 };
 
 type SupabaseJwt = {
   sub: string;
 };
 
-function decodeJwtPayload(token: string): { sub?: string } | null {
-  try {
-    const parts = token.split('.');
-
-    if (parts.length < 2) {
-      return null;
-    }
-
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-    const json = Buffer.from(padded, 'base64').toString('utf8');
-
-    return JSON.parse(json) as { sub?: string };
-  } catch {
-    return null;
-  }
-}
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly dataSource: DataSource) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthedRequest>();
 
     const authHeader = req.headers['authorization'];
@@ -40,20 +30,37 @@ export class SupabaseAuthGuard implements CanActivate {
 
     const token = authHeader.replace('Bearer ', '');
 
-    try {
-      const decoded = decodeJwtPayload(token) as SupabaseJwt | null;
+    const decoded = jwt.decode(token) as SupabaseJwt | null;
 
-      if (!decoded?.sub) {
-        throw new UnauthorizedException('Invalid token');
-      }
-
-      req.user = {
-        userId: decoded.sub,
-      };
-
-      return true;
-    } catch {
-      throw new UnauthorizedException('Token verification failed');
+    if (!decoded?.sub) {
+      throw new UnauthorizedException('Invalid token');
     }
+
+    const userId = decoded.sub;
+
+    // 🔥 FETCH PROFILE FROM DB
+    const rows: any[] = await this.dataSource.query(
+      `
+      select can_request_help, can_volunteer
+      from public.profiles
+      where id = $1
+      limit 1
+      `,
+      [userId],
+    );
+
+    const profile = rows[0];
+
+    if (!profile) {
+      throw new UnauthorizedException('Profile not found');
+    }
+
+    req.user = {
+      userId,
+      canRequestHelp: profile.can_request_help === true,
+      canVolunteer: profile.can_volunteer === true,
+    };
+
+    return true;
   }
 }
