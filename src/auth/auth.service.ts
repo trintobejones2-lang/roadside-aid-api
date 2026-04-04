@@ -42,7 +42,7 @@ export class AuthService {
       from public.dispatch_offers d
       join public.help_requests h on h.id = d.request_id
       join public.volunteers v on v.id = d.volunteer_id
-      where v.user_id = $1
+      where v."userId" = $1
         and d.status = 'ACCEPTED'
         and h.status = any($2)
       limit 1
