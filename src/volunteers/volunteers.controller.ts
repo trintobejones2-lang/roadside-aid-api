@@ -2,12 +2,13 @@ import { Body, Controller, Post, Get, UseGuards } from '@nestjs/common';
 import { VolunteersService } from './volunteers.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { HeaderAuthGuard } from '../common/guards/header-auth.guard';
 import { ReqUser } from '../common/decorators/req-user.decorator';
 import type { RequestUser } from '../common/types/request-user';
 import { SetVolunteerAvailabilityDto } from './dto/set-volunteer-availability.dto';
 
 @Controller('volunteers')
-@UseGuards(RolesGuard)
+@UseGuards(HeaderAuthGuard, RolesGuard)
 export class VolunteersController {
   constructor(private readonly volunteersService: VolunteersService) {}
 
