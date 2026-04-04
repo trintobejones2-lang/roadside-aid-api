@@ -40,13 +40,15 @@ export class SupabaseAuthGuard implements CanActivate {
 
     // 🔥 FETCH PROFILE FROM DB
     type ProfileRow = {
-      can_request_help: boolean | null;
-      can_volunteer: boolean | null;
+      can_request_help?: boolean | null;
+      can_volunteer?: boolean | null;
+      canRequestHelp?: boolean | null;
+      canVolunteer?: boolean | null;
     };
 
     const rowsUnknown: unknown = await this.dataSource.query(
       `
-  select can_request_help, can_volunteer
+  select *
   from public.profiles
   where id = $1
   limit 1
@@ -63,8 +65,8 @@ export class SupabaseAuthGuard implements CanActivate {
 
     req.user = {
       userId,
-      canRequestHelp: profile.can_request_help === true,
-      canVolunteer: profile.can_volunteer === true,
+      canRequestHelp: profile.can_request_help === true || profile.canRequestHelp === true,
+      canVolunteer: profile.can_volunteer === true || profile.canVolunteer === true,
     };
 
     return true;

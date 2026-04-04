@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 import { HelpRequestsService } from './help-request.service';
 import { CreateHelpRequestDto } from './dto/create-help-request.dto';
@@ -8,8 +17,11 @@ import { StatusDto } from './dto/status.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ReqUser } from '../common/decorators/req-user.decorator';
 import type { RequestUser } from '../common/types/request-user';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('help-requests')
+@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class HelpRequestsController {
   constructor(private service: HelpRequestsService) {}
 

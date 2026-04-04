@@ -1,10 +1,13 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { DispatchService } from './dispatch.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ReqUser } from '../common/decorators/req-user.decorator';
 import type { RequestUser } from '../common/types/request-user';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('dispatch')
+@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class DispatchController {
   constructor(private readonly dispatchService: DispatchService) {}
 

@@ -1,5 +1,3 @@
-import { APP_GUARD } from '@nestjs/core'; // ✅ add
-import { RolesGuard } from './common/guards/roles.guard'; // ✅ add
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -51,8 +49,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     PointsModule,
     RealtimeModule,
   ],
-  providers: [
-    { provide: APP_GUARD, useClass: RolesGuard }, // ✅ add
-  ],
+  providers: [],
 })
 export class AppModule {}

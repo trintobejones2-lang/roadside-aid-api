@@ -5,9 +5,10 @@ import { ReqUser } from '../common/decorators/req-user.decorator';
 import type { RequestUser } from '../common/types/request-user';
 import { SetVolunteerAvailabilityDto } from './dto/set-volunteer-availability.dto';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @Controller('volunteers')
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class VolunteersController {
   constructor(private readonly volunteersService: VolunteersService) {}
 
