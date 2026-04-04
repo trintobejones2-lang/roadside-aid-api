@@ -1,10 +1,9 @@
-import { APP_GUARD } from '@nestjs/core';
-import { HeaderAuthGuard } from './common/guards/header-auth.guard';
+import { APP_GUARD } from '@nestjs/core'; // ✅ add
 import { RolesGuard } from './common/guards/roles.guard'; // ✅ add
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import { AuthModule } from './auth/auth.module';
 import { HelpRequestsModule } from './help-requests/help-requests.module';
 import { PointsModule } from './points/points.module';
 import { VolunteersModule } from './volunteers/volunteers.module';
@@ -14,6 +13,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
+    AuthModule,
     NotificationsModule,
     ConfigModule.forRoot({
       isGlobal: true,
@@ -52,7 +52,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     RealtimeModule,
   ],
   providers: [
-    { provide: APP_GUARD, useClass: HeaderAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard }, // ✅ add
   ],
 })
