@@ -19,7 +19,7 @@ export class AuthService {
       `
       select id, status
       from public.help_requests
-      where user_id = $1
+      where "requesterId" = $1
         and status = any($2)
       limit 1
       `,
