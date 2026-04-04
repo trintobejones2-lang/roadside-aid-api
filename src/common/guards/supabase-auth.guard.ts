@@ -39,17 +39,23 @@ export class SupabaseAuthGuard implements CanActivate {
     const userId = decoded.sub;
 
     // 🔥 FETCH PROFILE FROM DB
-    const rows: any[] = await this.dataSource.query(
+    type ProfileRow = {
+      can_request_help: boolean | null;
+      can_volunteer: boolean | null;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(
       `
-      select can_request_help, can_volunteer
-      from public.profiles
-      where id = $1
-      limit 1
-      `,
+  select can_request_help, can_volunteer
+  from public.profiles
+  where id = $1
+  limit 1
+  `,
       [userId],
     );
 
-    const profile = rows[0];
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as ProfileRow[]) : [];
+    const profile = rows[0] ?? null;
 
     if (!profile) {
       throw new UnauthorizedException('Profile not found');
