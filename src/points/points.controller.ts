@@ -3,9 +3,8 @@ import type { Request } from 'express';
 
 import { PointsService } from './points.service';
 import { Roles } from '../common/decorators/roles.decorator';
-import { HeaderAuthGuard } from '../common/guards/header-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import type { RequestUser } from '../common/types/request-user';
+import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 
 type AuthedRequest = Request & { user: RequestUser };
 
@@ -15,7 +14,6 @@ export class PointsController {
 
   // GET /points/me -> { points, rank }
   @Get('points/me')
-  @UseGuards(HeaderAuthGuard, RolesGuard)
   @Roles('customer', 'volunteer', 'admin')
   async myPoints(@Req() req: AuthedRequest) {
     return this.points.getRankForUser(req.user.userId);
@@ -23,7 +21,7 @@ export class PointsController {
 
   // GET /leaderboard?limit=10 -> [{ userId, points }]
   @Get('leaderboard')
-  @UseGuards(HeaderAuthGuard, RolesGuard)
+  @UseGuards(SupabaseAuthGuard)
   @Roles('customer', 'volunteer', 'admin')
   async leaderboard(@Query('limit') limit?: string) {
     const n = limit ? Math.min(Math.max(Number(limit), 1), 50) : 10;
