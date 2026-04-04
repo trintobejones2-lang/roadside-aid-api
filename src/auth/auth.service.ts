@@ -12,6 +12,7 @@ export class AuthService {
   constructor(private readonly dataSource: DataSource) {}
 
   async switchRole(userId: string, targetRole: 'driver' | 'volunteer'): Promise<SwitchRoleResult> {
+    console.log('SWITCH ROLE start', { userId, targetRole });
     const activeRequestStatuses = ['OPEN', 'CLAIMED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS'];
 
     const activeRequestsUnknown: unknown = await this.dataSource.query(
@@ -28,7 +29,7 @@ export class AuthService {
     const activeRequests = Array.isArray(activeRequestsUnknown)
       ? (activeRequestsUnknown as Array<{ id: string; status: string }>)
       : [];
-
+    console.log('SWITCH ROLE activeRequests', activeRequests);
     if (activeRequests.length > 0) {
       throw new ForbiddenException(
         'You cannot switch roles while you have an active roadside request.',
@@ -52,7 +53,7 @@ export class AuthService {
     const activeVolunteerJobs = Array.isArray(activeVolunteerJobsUnknown)
       ? (activeVolunteerJobsUnknown as Array<{ id: string }>)
       : [];
-
+    console.log('SWITCH ROLE activeVolunteerJobs', activeVolunteerJobs);
     if (activeVolunteerJobs.length > 0) {
       throw new ForbiddenException(
         'You cannot switch roles while you have an active accepted assignment.',
@@ -78,7 +79,7 @@ export class AuthService {
       : [];
 
     const profile = profiles[0] ?? null;
-
+    console.log('SWITCH ROLE profile', profile);
     if (!profile) {
       throw new BadRequestException('Profile not found');
     }
@@ -90,7 +91,7 @@ export class AuthService {
     if (targetRole === 'volunteer' && profile.can_volunteer !== true) {
       throw new ForbiddenException('Your account cannot switch to volunteer mode.');
     }
-
+    console.log('SWITCH ROLE updating active_role', { userId, targetRole });
     await this.dataSource.query(
       `
       update public.profiles
