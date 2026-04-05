@@ -14,6 +14,7 @@ export class PointsController {
 
   // GET /points/me -> { points, rank }
   @Get('points/me')
+  @UseGuards(SupabaseAuthGuard)
   @Roles('customer', 'volunteer', 'admin')
   async myPoints(@Req() req: AuthedRequest) {
     return this.points.getRankForUser(req.user.userId);
