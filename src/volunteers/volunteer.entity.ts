@@ -10,33 +10,33 @@ import {
 @Entity('volunteers')
 export class Volunteer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column({ type: 'uuid' })
-  userId: string;
+  userId!: string;
 
   @Column({ type: 'boolean', default: false })
-  isAvailable: boolean;
+  isAvailable!: boolean;
 
   @Column({ name: 'fuel_regular', type: 'boolean', default: false })
-  fuelRegular: boolean;
+  fuelRegular!: boolean;
 
   @Column({ name: 'fuel_diesel', type: 'boolean', default: false })
-  fuelDiesel: boolean;
+  fuelDiesel!: boolean;
 
   @Column({ type: 'numeric', nullable: true })
-  lastLat: string | null;
+  lastLat!: string | null;
 
   @Column({ type: 'numeric', nullable: true })
-  lastLng: string | null;
+  lastLng!: string | null;
 
   @Column({ type: 'int', default: 10 })
-  serviceRadiusKm: number;
+  serviceRadiusKm!: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

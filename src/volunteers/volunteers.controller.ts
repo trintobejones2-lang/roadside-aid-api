@@ -6,11 +6,15 @@ import type { RequestUser } from '../common/types/request-user';
 import { SetVolunteerAvailabilityDto } from './dto/set-volunteer-availability.dto';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PointsService } from '../points/points.service';
 
 @Controller('volunteers')
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class VolunteersController {
-  constructor(private readonly volunteersService: VolunteersService) {}
+  constructor(
+    private readonly volunteersService: VolunteersService,
+    private readonly pointsService: PointsService,
+  ) {}
 
   @Get('active-map')
   @Roles('volunteer')
@@ -18,6 +22,10 @@ export class VolunteersController {
     return this.volunteersService.getActiveMapVolunteers();
   }
 
+  @Get('leaderboard')
+  async leaderboard() {
+    return this.pointsService.getLeaderboard(20);
+  }
   @Get('me')
   @Roles('volunteer')
   getMe(@ReqUser() user: RequestUser) {

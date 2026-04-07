@@ -121,19 +121,25 @@ export class PointsService {
   // -------------------------------------------------
   // Get leaderboard (top N users)
   // -------------------------------------------------
-  async getLeaderboard(limit = 10): Promise<Array<{ userId: string; points: number }>> {
+  async getLeaderboard(
+    limit = 10,
+  ): Promise<Array<{ userId: string; points: number; name: string }>> {
     const rows = await this.ledgerRepo
       .createQueryBuilder('l')
       .select('l.userId', 'userId')
       .addSelect('COALESCE(SUM(l.points), 0)', 'points')
+      .addSelect('p.full_name', 'name')
+      .leftJoin('profiles', 'p', 'p.id = l.userId')
       .groupBy('l.userId')
+      .addGroupBy('p.full_name')
       .orderBy('points', 'DESC')
       .limit(limit)
-      .getRawMany<{ userId: string; points: string }>();
+      .getRawMany<{ userId: string; points: string; name: string | null }>();
 
     return rows.map((r) => ({
       userId: r.userId,
       points: Number(r.points),
+      name: r.name || 'Anonymous',
     }));
   }
 
