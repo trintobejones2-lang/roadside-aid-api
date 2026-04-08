@@ -60,36 +60,36 @@ export class PointsService {
     const repo = manager.getRepository(PointsLedger);
 
     // ✅ ANTI-CHEAT #1 — Cooldown check (must wait 30 minutes between earning points)
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    //const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    const recentAward = await repo
-      .createQueryBuilder('l')
-      .where('l.userId = :userId', { userId })
-      .andWhere('l.createdAt > :since', { since: thirtyMinutesAgo })
-      .getOne();
+    // const recentAward = await repo
+    // .createQueryBuilder('l')
+    //.where('l.userId = :userId', { userId })
+    //.andWhere('l.createdAt > :since', { since: thirtyMinutesAgo })
+    //.getOne();
 
-    if (recentAward) {
-      console.warn(`Anti-cheat cooldown: user ${userId} tried to earn points too soon`);
-      throw new BadRequestException('You must wait 30 minutes between earning points');
-    }
+    // if (recentAward) {
+    // console.warn(`Anti-cheat cooldown: user ${userId} tried to earn points too soon`);
+    // throw new BadRequestException('You must wait 30 minutes between earning points');
+    // }
 
     // ✅ ANTI-CHEAT #2 — Daily points limit (max 50 points per day)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // const startOfDay = new Date();
+    // startOfDay.setHours(0, 0, 0, 0);
 
-    const todayPoints = await repo
-      .createQueryBuilder('l')
-      .select('COALESCE(SUM(l.points), 0)', 'total')
-      .where('l.userId = :userId', { userId })
-      .andWhere('l.createdAt >= :startOfDay', { startOfDay })
-      .getRawOne<{ total: string }>();
+    //const todayPoints = await repo
+    // .createQueryBuilder('l')
+    //.select('COALESCE(SUM(l.points), 0)', 'total')
+    // .where('l.userId = :userId', { userId })
+    // .andWhere('l.createdAt >= :startOfDay', { startOfDay })
+    // .getRawOne<{ total: string }>();
 
-    const pointsEarnedToday = Number(todayPoints?.total ?? 0);
+    //const pointsEarnedToday = Number(todayPoints?.total ?? 0);
 
-    if (pointsEarnedToday >= 50) {
-      console.warn(`Anti-cheat daily limit: user ${userId} has reached 50 points today`);
-      throw new BadRequestException('You have reached the daily points limit of 50');
-    }
+    // if (pointsEarnedToday >= 50) {
+    // console.warn(`Anti-cheat daily limit: user ${userId} has reached 50 points today`);
+    // throw new BadRequestException('You have reached the daily points limit of 50');
+    // }
 
     // ✅ Award the points
     try {

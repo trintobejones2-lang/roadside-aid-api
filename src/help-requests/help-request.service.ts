@@ -614,7 +614,7 @@ export class HelpRequestsService {
 
       await this.points.awardHelpConfirmed(m, vol.userId, requestId);
 
-      return { requestId, confirmed: true };
+      return { requestId, confirmed: true, pointsAwarded: 5 };
     });
   }
 }
