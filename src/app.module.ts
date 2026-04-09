@@ -8,6 +8,7 @@ import { VolunteersModule } from './volunteers/volunteers.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { QueueModule } from './queue/queue.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdminController } from './admin/admin.controller';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     PointsModule,
     RealtimeModule,
   ],
+  controllers: [AdminController],
   providers: [],
 })
 export class AppModule {}
