@@ -58,8 +58,8 @@ export class VolunteersService {
     }
 
     const profileFraudFlagCount = await this.getProfileFraudFlagCount(userId);
-
-    if (profileFraudFlagCount >= 3 && v.isAvailable) {
+    const isRestricted = profileFraudFlagCount >= 3;
+    if (isRestricted && v.isAvailable) {
       v.isAvailable = false;
       v = await this.repo.save(v);
     }
@@ -68,6 +68,7 @@ export class VolunteersService {
       id: v.id,
       userId: v.userId,
       isAvailable: v.isAvailable,
+      isRestricted,
       fuelRegular: v.fuelRegular,
       fuelDiesel: v.fuelDiesel,
       lastLat: v.lastLat != null ? Number(v.lastLat) : null,
