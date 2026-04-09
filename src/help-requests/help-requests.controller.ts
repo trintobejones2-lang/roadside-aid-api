@@ -30,7 +30,7 @@ export class HelpRequestsController {
   @Post()
   @Roles('driver')
   create(@ReqUser() user: RequestUser, @Body() body: CreateHelpRequestDto) {
-    return this.service.createRequest(user.userId, body);
+    return this.service.createRequest(user, body);
   }
 
   @Get('open')

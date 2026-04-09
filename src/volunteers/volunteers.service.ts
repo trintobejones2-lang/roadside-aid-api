@@ -34,10 +34,12 @@ export class VolunteersService {
 
       v = await this.repo.save(v);
     }
+
     if ((v.fraud_flag_count ?? 0) >= 3 && v.isAvailable) {
       v.isAvailable = false;
       v = await this.repo.save(v);
     }
+
     return {
       id: v.id,
       userId: v.userId,

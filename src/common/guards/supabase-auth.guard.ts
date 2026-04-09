@@ -43,6 +43,7 @@ export class SupabaseAuthGuard implements CanActivate {
       can_volunteer?: boolean | null;
       canRequestHelp?: boolean | null;
       canVolunteer?: boolean | null;
+      fraud_flag_count?: number | null;
     };
 
     const rowsUnknown: unknown = await this.dataSource.query(
@@ -68,6 +69,7 @@ export class SupabaseAuthGuard implements CanActivate {
       canRequestHelp: profile.can_request_help === true || profile.canRequestHelp === true,
       canVolunteer: profile.can_volunteer === true || profile.canVolunteer === true,
       isAdmin: profile.role === 'admin',
+      fraudFlagCount: profile.fraud_flag_count ?? 0,
     };
 
     return true;

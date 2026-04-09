@@ -17,6 +17,7 @@ import { Volunteer } from '../volunteers/volunteer.entity';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { DispatchQueue } from '../queue/dispatch.queue';
 import { getDistanceInMeters } from '../utils/distance';
+import { RequestUser } from '../common/types/request-user';
 
 const ENABLE_REPEAT_REQUEST_WARNING = false;
 
@@ -452,9 +453,14 @@ export class HelpRequestsService {
   // ----------------------------------------
   // Create Help Request
   // ----------------------------------------
-  async createRequest(requesterId: string, body: CreateHelpRequestDto) {
+  async createRequest(user: RequestUser, body: CreateHelpRequestDto) {
+    if ((user.fraudFlagCount ?? 0) >= 3) {
+      throw new ForbiddenException(
+        'Your account is temporarily restricted. Please contact support.',
+      );
+    }
     const req = this.reqRepo.create({
-      requesterId,
+      requesterId: user.userId,
       type: body.type,
       status: HelpRequestStatus.OPEN,
       pickupLat: String(body.pickupLat),
@@ -519,6 +525,16 @@ export class HelpRequestsService {
 
       const v = await volRepo.findOne({ where: { userId: volunteerUserId } });
       if (!v) throw new ForbiddenException('Not a volunteer');
+      if ((v.fraud_flag_count ?? 0) >= 3) {
+        throw new ForbiddenException(
+          'Your volunteer account is temporarily restricted. Please contact support.',
+        );
+      }
+      if ((v.fraud_flag_count ?? 0) >= 3) {
+        throw new ForbiddenException(
+          'Your volunteer account is temporarily restricted. Please contact support.',
+        );
+      }
       if (!v.isAvailable) throw new ForbiddenException('Volunteer not available');
       if (req.requesterId === volunteerUserId) {
         throw new ForbiddenException('Cannot claim your own request');
