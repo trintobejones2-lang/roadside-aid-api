@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Volunteer } from './volunteer.entity';
@@ -51,6 +51,12 @@ export class VolunteersService {
   async setAvailability(userId: string, body: SetVolunteerAvailabilityDto) {
     let v = await this.repo.findOne({ where: { userId } });
     if (!v) v = this.repo.create({ userId });
+
+    if (body.isAvailable === true && (v.fraud_flag_count ?? 0) >= 3) {
+      throw new ForbiddenException(
+        'Your volunteer account is temporarily restricted. Please contact support.',
+      );
+    }
 
     // ✅ Only update if the field exists on the request body
     if (body.isAvailable !== undefined) {
