@@ -14,15 +14,27 @@ export class AdminController {
   // ✅ GET profile
   @Get('profiles/:id')
   async getProfile(@Param('id', new ParseUUIDPipe()) id: string) {
-    const rows = await this.dataSource.query(
+    type AdminProfileRow = {
+      id: string;
+      role: string | null;
+      active_role: string | null;
+      can_request_help: boolean | null;
+      can_volunteer: boolean | null;
+      fraud_flag_count: number | null;
+      fraud_reason: string | null;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(
       `
-      select id, role, fraud_flag_count, fraud_reason
-      from public.profiles
-      where id = $1
-      limit 1
-      `,
+    select id, role, active_role, can_request_help, can_volunteer, fraud_flag_count, fraud_reason
+    from public.profiles
+    where id = $1
+    limit 1
+    `,
       [id],
     );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as AdminProfileRow[]) : [];
 
     return rows[0] ?? null;
   }
