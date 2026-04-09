@@ -21,7 +21,7 @@ export class DispatchService {
     @InjectRepository(Claim)
     private readonly claimRepo: Repository<Claim>,
   ) {}
-  async acceptOffer(offerId: string, volunteerUserId: string) {
+  async acceptOffer(offerId: string, volunteerUserId: string, lat: number, lng: number) {
     return this.dispatchOfferRepo.manager.transaction(async (manager) => {
       const offerRepo = manager.getRepository(DispatchOffer);
       const requestRepo = manager.getRepository(HelpRequest);
@@ -73,6 +73,17 @@ export class DispatchService {
       if (request.status !== HelpRequestStatus.OPEN) {
         throw new ConflictException('Request is no longer available');
       }
+      // 🚫 ANTI-CHEAT — stale location check
+      if (!volunteer.updatedAt) {
+        throw new ForbiddenException('Location not available');
+      }
+
+      const locationAgeMs = Date.now() - new Date(volunteer.updatedAt).getTime();
+      const MAX_LOCATION_AGE_MS = 2 * 60 * 1000; // 2 minutes
+
+      if (locationAgeMs > MAX_LOCATION_AGE_MS) {
+        throw new ForbiddenException('Location is too old. Please refresh your location.');
+      }
       // ✅ Prevent volunteer from accepting their own request
       if (request.requesterId === volunteerUserId) {
         throw new ForbiddenException('You cannot accept your own request');
@@ -106,6 +117,18 @@ export class DispatchService {
             `You are too far away to accept this request (${distanceMiles.toFixed(1)} miles)`,
           );
         }
+
+        if (distanceMiles > 25) {
+          request.anti_cheat_flag = true;
+
+          const reason = `Accepted from suspicious distance: ${distanceMiles.toFixed(1)} miles`;
+
+          if (!request.anti_cheat_reason) {
+            request.anti_cheat_reason = reason;
+          } else if (!request.anti_cheat_reason.includes(reason)) {
+            request.anti_cheat_reason = `${request.anti_cheat_reason} | ${reason}`;
+          }
+        }
       }
       // 4) Accept this offer
       offer.status = DispatchOfferStatus.ACCEPTED;
@@ -113,6 +136,10 @@ export class DispatchService {
 
       // 5) Claim the request
       request.status = HelpRequestStatus.CLAIMED;
+      request.volunteer_accept_lat = lat;
+      request.volunteer_accept_lng = lng;
+      request.volunteer_accept_at = new Date();
+
       await requestRepo.save(request);
 
       volunteer.isAvailable = false;

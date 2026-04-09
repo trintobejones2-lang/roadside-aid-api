@@ -3,4 +3,5 @@ export type RequestUser = {
   role: string;
   canRequestHelp?: boolean;
   canVolunteer?: boolean;
+  isAdmin?: boolean;
 };

@@ -3,12 +3,10 @@ import { DataSource } from 'typeorm';
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 
+import type { RequestUser } from '../types/request-user';
+
 type AuthedRequest = Request & {
-  user?: {
-    userId: string;
-    canRequestHelp: boolean;
-    canVolunteer: boolean;
-  };
+  user?: RequestUser;
 };
 
 type SupabaseJwt = {
@@ -40,6 +38,7 @@ export class SupabaseAuthGuard implements CanActivate {
 
     // 🔥 FETCH PROFILE FROM DB
     type ProfileRow = {
+      role?: string | null;
       can_request_help?: boolean | null;
       can_volunteer?: boolean | null;
       canRequestHelp?: boolean | null;
@@ -65,8 +64,10 @@ export class SupabaseAuthGuard implements CanActivate {
 
     req.user = {
       userId,
+      role: profile.role ?? 'user',
       canRequestHelp: profile.can_request_help === true || profile.canRequestHelp === true,
       canVolunteer: profile.can_volunteer === true || profile.canVolunteer === true,
+      isAdmin: profile.role === 'admin',
     };
 
     return true;

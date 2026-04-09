@@ -16,6 +16,9 @@ import { PointsService } from '../points/points.service';
 import { Volunteer } from '../volunteers/volunteer.entity';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { DispatchQueue } from '../queue/dispatch.queue';
+import { getDistanceInMeters } from '../utils/distance';
+
+const ENABLE_REPEAT_REQUEST_WARNING = false;
 
 //CONSTRUCTOR// Helper to build map bounds from items
 @Injectable()
@@ -38,6 +41,34 @@ export class HelpRequestsService {
 
     return ageMs >= staleMs;
   }
+  private async hasRecentCompletedOrConfirmedRequest(
+    requesterId: string,
+    withinMinutes = 30,
+  ): Promise<boolean> {
+    const since = new Date(Date.now() - withinMinutes * 60 * 1000);
+
+    const recentRequest = await this.reqRepo
+      .createQueryBuilder('r')
+      .where('r.requesterId = :requesterId', { requesterId })
+      .andWhere('r.createdAt >= :since', { since })
+      .andWhere('r.status IN (:...statuses)', {
+        statuses: [HelpRequestStatus.COMPLETED],
+      })
+      .getOne();
+
+    if (recentRequest) return true;
+
+    const recentConfirmation = await this.confRepo
+      .createQueryBuilder('c')
+      .innerJoin(HelpRequest, 'r', 'r.id = c.requestId')
+      .where('r.requesterId = :requesterId', { requesterId })
+      .andWhere('c.confirmedAt >= :since', { since })
+      .andWhere('c.confirmedByRequester = true')
+      .getOne();
+
+    return !!recentConfirmation;
+  }
+
   async expireOldOpenRequests(expireMinutes = 30) {
     const openRequests = await this.reqRepo.find({
       where: { status: HelpRequestStatus.OPEN },
@@ -174,7 +205,38 @@ export class HelpRequestsService {
       (error as { code?: string }).code === '23505'
     );
   }
+  //increments fraud_flag_count for the volunteer and sets anti_cheat_flag and reason on the request
+  private async appendAntiCheatReason(request: HelpRequest, reason: string) {
+    request.anti_cheat_flag = true;
 
+    let isNewReason = false;
+
+    if (!request.anti_cheat_reason) {
+      request.anti_cheat_reason = reason;
+      isNewReason = true;
+    } else if (!request.anti_cheat_reason.includes(reason)) {
+      request.anti_cheat_reason = `${request.anti_cheat_reason} | ${reason}`;
+      isNewReason = true;
+    }
+
+    // ✅ Only increment once per new reason
+    if (isNewReason) {
+      const claim = await this.claimRepo.findOne({
+        where: { requestId: request.id },
+      });
+
+      if (claim) {
+        const volunteer = await this.volRepo.findOne({
+          where: { id: claim.volunteerId },
+        });
+
+        if (volunteer) {
+          volunteer.fraud_flag_count = (volunteer.fraud_flag_count ?? 0) + 1;
+          await this.volRepo.save(volunteer);
+        }
+      }
+    }
+  }
   // -----------------------------
   // Distance Helper (Miles)
   // -----------------------------
@@ -349,7 +411,44 @@ export class HelpRequestsService {
 
     return { items, total };
   }
+  async listFlaggedRequests() {
+    const requests = await this.reqRepo.find({
+      where: { anti_cheat_flag: true },
+      order: { updatedAt: 'DESC' },
+    });
 
+    const results = await Promise.all(
+      requests.map(async (request) => {
+        const claim = await this.claimRepo.findOne({
+          where: { requestId: request.id },
+        });
+
+        if (!claim) {
+          return {
+            ...request,
+            volunteer: null,
+          };
+        }
+
+        const volunteer = await this.volRepo.findOne({
+          where: { id: claim.volunteerId },
+        });
+
+        return {
+          ...request,
+          volunteer: volunteer
+            ? {
+                id: volunteer.id,
+                userId: volunteer.userId,
+                fraud_flag_count: volunteer.fraud_flag_count,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return results;
+  }
   // ----------------------------------------
   // Create Help Request
   // ----------------------------------------
@@ -380,7 +479,31 @@ export class HelpRequestsService {
   // ----------------------------------------
   // Claim Request
   // ----------------------------------------
-  async claimRequest(requestId: string, volunteerUserId: string, etaMinutes?: number) {
+  async claimRequest(
+    requestId: string,
+    volunteerUserId: string,
+    lat: number,
+    lng: number,
+    etaMinutes?: number,
+  ) {
+    if (ENABLE_REPEAT_REQUEST_WARNING) {
+      const request = await this.reqRepo.findOne({
+        where: { id: requestId },
+      });
+
+      if (request) {
+        const hasRecentRequest = await this.hasRecentCompletedOrConfirmedRequest(
+          request.requesterId,
+          30,
+        );
+
+        if (hasRecentRequest) {
+          throw new BadRequestException(
+            'This requester recently completed a job. Try again later.',
+          );
+        }
+      }
+    }
     return this.dataSource.transaction(async (m) => {
       const reqRepo = m.getRepository(HelpRequest);
       const claimRepo = m.getRepository(Claim);
@@ -416,6 +539,11 @@ export class HelpRequestsService {
       }
 
       req.status = HelpRequestStatus.CLAIMED;
+
+      req.volunteer_accept_lat = lat;
+      req.volunteer_accept_lng = lng;
+      req.volunteer_accept_at = new Date();
+
       await reqRepo.save(req);
 
       // automatically set volunteer offline after accepting a job
@@ -545,13 +673,31 @@ export class HelpRequestsService {
       };
     });
   }
-  async markArrived(id: string, volunteerUserId: string) {
+
+  async markArrived(id: string, volunteerUserId: string, lat: number, lng: number) {
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerUserId },
     });
 
     if (!volunteer) {
       throw new ForbiddenException('Not a volunteer');
+    }
+    if (!volunteer.updatedAt) {
+      throw new ForbiddenException('Location not available');
+    }
+
+    const locationAgeMs = Date.now() - new Date(volunteer.updatedAt).getTime();
+    const MAX_LOCATION_AGE_MS = 2 * 60 * 1000; // 2 minutes
+
+    if (locationAgeMs > MAX_LOCATION_AGE_MS) {
+      throw new ForbiddenException('Location is too old. Please refresh your location.');
+    }
+    const request = await this.reqRepo.findOne({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Request not found');
     }
 
     const claim = await this.claimRepo.findOne({
@@ -562,7 +708,168 @@ export class HelpRequestsService {
       throw new ForbiddenException('You are not assigned to this request');
     }
 
+    const pickupLat = Number(request.pickupLat);
+    const pickupLng = Number(request.pickupLng);
+
+    const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
+
+    const MAX_DISTANCE_METERS = 150;
+    const FLAG_DISTANCE_METERS = 100;
+
+    if (distance > MAX_DISTANCE_METERS) {
+      throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
+    }
+
+    if (distance > FLAG_DISTANCE_METERS) {
+      await this.appendAntiCheatReason(
+        request,
+        `Arrived from suspicious distance: ${Math.round(distance)}m`,
+      );
+    }
+    // Check for suspiciously fast arrival after accept (possible GPS spoofing or cheating)
+    const arrivedAt = new Date();
+
+    if (
+      request.volunteer_accept_at &&
+      request.volunteer_accept_lat != null &&
+      request.volunteer_accept_lng != null
+    ) {
+      const acceptAtMs = new Date(request.volunteer_accept_at).getTime();
+      const arrivedAtMs = arrivedAt.getTime();
+      const secondsBetween = Math.round((arrivedAtMs - acceptAtMs) / 1000);
+
+      if (secondsBetween < 30) {
+        await this.appendAntiCheatReason(
+          request,
+          `Arrived suspiciously fast after accept: ${secondsBetween}s`,
+        );
+      }
+
+      const acceptToArriveDistance = getDistanceInMeters(
+        Number(request.volunteer_accept_lat),
+        Number(request.volunteer_accept_lng),
+        lat,
+        lng,
+      );
+
+      if (secondsBetween > 0) {
+        const metersPerSecond = acceptToArriveDistance / secondsBetween;
+
+        if (metersPerSecond > 45) {
+          await this.appendAntiCheatReason(
+            request,
+            `Movement suspiciously fast from accept to arrive: ${Math.round(acceptToArriveDistance)}m in ${secondsBetween}s`,
+          );
+        }
+      }
+    }
+
+    request.volunteer_arrived_lat = lat;
+    request.volunteer_arrived_lng = lng;
+    request.volunteer_arrived_at = arrivedAt;
+
+    await this.reqRepo.save(request);
+
     return this.updateStatus(id, HelpRequestStatus.ARRIVED);
+  }
+
+  async markCompleted(id: string, volunteerUserId: string, lat: number, lng: number) {
+    const volunteer = await this.volRepo.findOne({
+      where: { userId: volunteerUserId },
+    });
+
+    if (!volunteer) {
+      throw new ForbiddenException('Not a volunteer');
+    }
+    if (!volunteer.updatedAt) {
+      throw new ForbiddenException('Location not available');
+    }
+
+    const locationAgeMs = Date.now() - new Date(volunteer.updatedAt).getTime();
+    const MAX_LOCATION_AGE_MS = 2 * 60 * 1000; // 2 minutes
+
+    if (locationAgeMs > MAX_LOCATION_AGE_MS) {
+      throw new ForbiddenException('Location is too old. Please refresh your location.');
+    }
+    const request = await this.reqRepo.findOne({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    const claim = await this.claimRepo.findOne({
+      where: { requestId: id, volunteerId: volunteer.id },
+    });
+
+    if (!claim) {
+      throw new ForbiddenException('You are not assigned to this request');
+    }
+
+    const pickupLat = Number(request.pickupLat);
+    const pickupLng = Number(request.pickupLng);
+
+    const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
+
+    const MAX_DISTANCE_METERS = 150;
+    const FLAG_DISTANCE_METERS = 100;
+
+    if (distance > MAX_DISTANCE_METERS) {
+      throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
+    }
+
+    if (distance > FLAG_DISTANCE_METERS) {
+      await this.appendAntiCheatReason(
+        request,
+        `Completed from suspicious distance: ${Math.round(distance)}m`,
+      );
+    }
+    // Check for suspiciously fast completion after arrival (possible GPS spoofing or cheating)
+    const completedAt = new Date();
+
+    if (
+      request.volunteer_arrived_at &&
+      request.volunteer_arrived_lat != null &&
+      request.volunteer_arrived_lng != null
+    ) {
+      const arrivedAtMs = new Date(request.volunteer_arrived_at).getTime();
+      const completedAtMs = completedAt.getTime();
+      const secondsBetween = Math.round((completedAtMs - arrivedAtMs) / 1000);
+
+      if (secondsBetween < 60) {
+        await this.appendAntiCheatReason(
+          request,
+          `Completed suspiciously fast after arrival: ${secondsBetween}s`,
+        );
+      }
+
+      const arriveToCompleteDistance = getDistanceInMeters(
+        Number(request.volunteer_arrived_lat),
+        Number(request.volunteer_arrived_lng),
+        lat,
+        lng,
+      );
+
+      if (secondsBetween > 0) {
+        const metersPerSecond = arriveToCompleteDistance / secondsBetween;
+
+        if (metersPerSecond > 45) {
+          await this.appendAntiCheatReason(
+            request,
+            `Movement suspiciously fast from arrive to complete: ${Math.round(arriveToCompleteDistance)}m in ${secondsBetween}s`,
+          );
+        }
+      }
+    }
+
+    request.volunteer_completed_lat = lat;
+    request.volunteer_completed_lng = lng;
+    request.volunteer_completed_at = completedAt;
+
+    await this.reqRepo.save(request);
+
+    return this.updateStatus(id, HelpRequestStatus.COMPLETED);
   }
   // ----------------------------------------
   // Confirm Completion (Requester)

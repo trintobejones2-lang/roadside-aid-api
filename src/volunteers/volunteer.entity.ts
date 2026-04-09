@@ -34,6 +34,9 @@ export class Volunteer {
   @Column({ type: 'int', default: 10 })
   serviceRadiusKm!: number;
 
+  @Column({ type: 'int', default: 0 })
+  fraud_flag_count!: number;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

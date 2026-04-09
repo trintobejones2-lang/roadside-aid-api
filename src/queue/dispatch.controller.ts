@@ -19,8 +19,12 @@ export class DispatchController {
 
   @Post('offers/:id/accept')
   @Roles('volunteer')
-  acceptOffer(@Param('id') id: string, @ReqUser() user: RequestUser) {
-    return this.dispatchService.acceptOffer(id, user.userId);
+  acceptOffer(
+    @Param('id') id: string,
+    @ReqUser() user: RequestUser,
+    @Body() body: { lat: number; lng: number },
+  ) {
+    return this.dispatchService.acceptOffer(id, user.userId, body.lat, body.lng);
   }
   @Post('offers/:id/decline')
   @Roles('volunteer')

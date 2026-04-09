@@ -28,6 +28,10 @@ export class RolesGuard implements CanActivate {
 
     if (requiredRoles.length === 0) return true;
 
+    if (requiredRoles.includes('admin') && req.user?.isAdmin) {
+      return true;
+    }
+
     if (requiredRoles.includes('driver') && canRequestHelp) {
       return true;
     }

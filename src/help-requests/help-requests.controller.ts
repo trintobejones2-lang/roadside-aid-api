@@ -19,6 +19,8 @@ import { ReqUser } from '../common/decorators/req-user.decorator';
 import type { RequestUser } from '../common/types/request-user';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ArriveDto } from './dto/arrive.dto';
+import { CompleteDto } from './dto/complete.dto';
 
 @Controller('help-requests')
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -66,7 +68,11 @@ export class HelpRequestsController {
       limit ? Number(limit) : 20,
     );
   }
-
+  @Get('flagged')
+  @Roles('admin')
+  flagged() {
+    return this.service.listFlaggedRequests();
+  }
   @Get(':id')
   getById(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.getById(id);
@@ -79,7 +85,7 @@ export class HelpRequestsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: ClaimDto,
   ) {
-    return this.service.claimRequest(id, user.userId, body.etaMinutes);
+    return this.service.claimRequest(id, user.userId, body.lat, body.lng, body.etaMinutes);
   }
 
   @Post(':id/status')
@@ -93,8 +99,21 @@ export class HelpRequestsController {
   }
   @Post(':id/arrive')
   @Roles('volunteer')
-  arrive(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
-    return this.service.markArrived(id, user.userId);
+  arrive(
+    @ReqUser() user: RequestUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: ArriveDto,
+  ) {
+    return this.service.markArrived(id, user.userId, body.lat, body.lng);
+  }
+  @Post(':id/complete')
+  @Roles('volunteer')
+  complete(
+    @ReqUser() user: RequestUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: CompleteDto,
+  ) {
+    return this.service.markCompleted(id, user.userId, body.lat, body.lng);
   }
   @Post(':id/cancel')
   @Roles('driver')

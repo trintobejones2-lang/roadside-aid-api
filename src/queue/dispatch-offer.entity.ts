@@ -21,21 +21,21 @@ export enum DispatchOfferStatus {
 @Index(['requestId', 'volunteerId'], { unique: true })
 export class DispatchOffer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column('uuid', { name: 'request_id' })
-  requestId: string;
+  requestId!: string;
 
   @Column('uuid', { name: 'volunteer_id' })
-  volunteerId: string;
+  volunteerId!: string;
 
   @ManyToOne(() => HelpRequest, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'request_id' })
-  request: HelpRequest;
+  request!: HelpRequest;
 
   @ManyToOne(() => Volunteer, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'volunteer_id' })
-  volunteer: Volunteer;
+  volunteer!: Volunteer;
 
   @Column({
     name: 'status',
@@ -44,13 +44,13 @@ export class DispatchOffer {
     enumName: 'dispatch_offers_status_enum',
     default: DispatchOfferStatus.PENDING,
   })
-  status: DispatchOfferStatus;
+  status!: DispatchOfferStatus;
 
   @Column({ name: 'decline_reason', type: 'text', nullable: true })
-  declineReason: string | null;
+  declineReason!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
-  expiresAt: Date | null;
+  expiresAt!: Date | null;
 }

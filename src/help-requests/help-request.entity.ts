@@ -15,10 +15,12 @@ export enum HelpType {
   LOCKOUT = 'LOCKOUT',
   OTHER = 'OTHER',
 }
+
 export enum FuelType {
   REGULAR = 'REGULAR',
   DIESEL = 'DIESEL',
 }
+
 export enum HelpRequestStatus {
   OPEN = 'OPEN',
   CLAIMED = 'CLAIMED',
@@ -34,13 +36,13 @@ export enum HelpRequestStatus {
 @Entity('help_requests')
 export class HelpRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid' })
-  requesterId: string;
+  requesterId!: string;
 
   @Column({ type: 'enum', enum: HelpType })
-  type: HelpType;
+  type!: HelpType;
 
   @Column({
     name: 'fuel_type',
@@ -49,30 +51,63 @@ export class HelpRequest {
     enumName: 'fuel_type_enum',
     nullable: true,
   })
-  fuelType: FuelType | null;
+  fuelType!: FuelType | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_accept_lat?: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_accept_lng?: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_arrived_lat?: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_arrived_lng?: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_completed_lat?: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  volunteer_completed_lng?: number | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  volunteer_accept_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  volunteer_arrived_at?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  volunteer_completed_at?: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  anti_cheat_flag!: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  anti_cheat_reason?: string | null;
 
   @Index()
   @Column({ type: 'enum', enum: HelpRequestStatus, default: HelpRequestStatus.OPEN })
-  status: HelpRequestStatus;
+  status!: HelpRequestStatus;
 
   @Column({ type: 'numeric' })
-  pickupLat: string;
+  pickupLat!: string;
 
   @Column({ type: 'numeric' })
-  pickupLng: string;
+  pickupLng!: string;
 
   @Column({ type: 'text', nullable: true })
-  pickupAddress: string | null;
+  pickupAddress!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  notes!: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  completedAt: Date | null;
+  completedAt!: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
