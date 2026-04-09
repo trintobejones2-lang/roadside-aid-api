@@ -1,13 +1,35 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Volunteer } from './volunteer.entity';
 import { SetVolunteerAvailabilityDto } from './dto/set-volunteer-availability.dto';
 
 @Injectable()
 export class VolunteersService {
-  constructor(@InjectRepository(Volunteer) private repo: Repository<Volunteer>) {}
+  constructor(
+    @InjectRepository(Volunteer) private repo: Repository<Volunteer>,
+    private readonly dataSource: DataSource,
+  ) {}
+  private async getProfileFraudFlagCount(userId: string): Promise<number> {
+    type ProfileFraudRow = {
+      fraud_flag_count?: number | null;
+    };
 
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+    select fraud_flag_count
+    from public.profiles
+    where id = $1
+    limit 1
+    `,
+      [userId],
+    );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as ProfileFraudRow[]) : [];
+    const profile = rows[0] ?? null;
+
+    return profile?.fraud_flag_count ?? 0;
+  }
   async getActiveMapVolunteers() {
     const volunteers = await this.repo.find({
       where: { isAvailable: true },
@@ -35,7 +57,9 @@ export class VolunteersService {
       v = await this.repo.save(v);
     }
 
-    if ((v.fraud_flag_count ?? 0) >= 3 && v.isAvailable) {
+    const profileFraudFlagCount = await this.getProfileFraudFlagCount(userId);
+
+    if (profileFraudFlagCount >= 3 && v.isAvailable) {
       v.isAvailable = false;
       v = await this.repo.save(v);
     }
@@ -57,9 +81,11 @@ export class VolunteersService {
     let v = await this.repo.findOne({ where: { userId } });
     if (!v) v = this.repo.create({ userId });
 
-    if (body.isAvailable === true && (v.fraud_flag_count ?? 0) >= 3) {
+    const profileFraudFlagCount = await this.getProfileFraudFlagCount(userId);
+
+    if (body.isAvailable === true && profileFraudFlagCount >= 3) {
       throw new ForbiddenException(
-        'Your volunteer account is temporarily restricted. Please contact support.',
+        'Your account is temporarily restricted. Please contact support.',
       );
     }
 
