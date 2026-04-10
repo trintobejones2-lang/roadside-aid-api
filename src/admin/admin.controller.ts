@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 import { Roles } from '../common/decorators/roles.decorator';
@@ -83,6 +83,9 @@ export class AdminController {
   ) {
     const fraudFlagCount = body.fraudFlagCount ?? 0;
     const fraudReason = body.fraudReason ?? null;
+    if (fraudFlagCount >= 1 && !String(fraudReason ?? '').trim()) {
+      throw new BadRequestException('fraudReason is required when fraudFlagCount is 1 or higher');
+    }
 
     type CurrentFraudRow = {
       fraud_flag_count: number | null;
