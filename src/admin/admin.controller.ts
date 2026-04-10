@@ -12,6 +12,31 @@ export class AdminController {
   constructor(private readonly dataSource: DataSource) {}
 
   // ✅ GET profile
+  @Get('profiles/flagged')
+  async listFlaggedProfiles() {
+    type FlaggedProfileRow = {
+      id: string;
+      role: string | null;
+      active_role: string | null;
+      can_request_help: boolean | null;
+      can_volunteer: boolean | null;
+      fraud_flag_count: number | null;
+      fraud_reason: string | null;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+    select id, role, active_role, can_request_help, can_volunteer, fraud_flag_count, fraud_reason
+    from public.profiles
+    where fraud_flag_count >= 1
+    order by fraud_flag_count desc, id asc
+    `,
+    );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as FlaggedProfileRow[]) : [];
+
+    return rows;
+  }
   @Get('profiles/:id')
   async getProfile(@Param('id', new ParseUUIDPipe()) id: string) {
     type AdminProfileRow = {
