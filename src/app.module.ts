@@ -9,6 +9,7 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { QueueModule } from './queue/queue.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AdminController } from './admin/admin.controller';
+//import { FraudHistory } from './fraud-history/fraud-history.entity';
 
 @Module({
   imports: [

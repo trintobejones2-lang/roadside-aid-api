@@ -450,6 +450,18 @@ export class HelpRequestsService {
 
     return results;
   }
+  async clearFraudFlag(id: string) {
+    return this.reqRepo.update(id, {
+      anti_cheat_flag: false,
+    });
+  }
+  // Admin marks request as confirmed fraud, which cancels the request and increments fraud flag on volunteer
+  async confirmFraud(id: string) {
+    return this.reqRepo.update(id, {
+      status: HelpRequestStatus.CANCELLED,
+      anti_cheat_flag: true,
+    });
+  }
   // ----------------------------------------
   // Create Help Request
   // ----------------------------------------

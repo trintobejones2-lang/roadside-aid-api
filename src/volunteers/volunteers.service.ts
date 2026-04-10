@@ -144,4 +144,13 @@ export class VolunteersService {
 
     return this.repo.save(v);
   }
+  async warnUser(userId: string) {
+    const user = await this.repo.findOne({ where: { userId } });
+
+    if (!user) return null;
+
+    user.fraud_flag_count = (user.fraud_flag_count || 0) + 1;
+
+    return this.repo.save(user);
+  }
 }
