@@ -19,5 +19,6 @@ import { QueueModule } from '../queue/queue.module';
   ],
   controllers: [HelpRequestsController],
   providers: [HelpRequestsService],
+  exports: [HelpRequestsService],
 })
 export class HelpRequestsModule {}
