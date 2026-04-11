@@ -5,4 +5,5 @@ export type RequestUser = {
   canVolunteer: boolean;
   isAdmin?: boolean;
   fraudFlagCount: number;
+  isBlocked: boolean;
 };

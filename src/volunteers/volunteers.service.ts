@@ -83,7 +83,25 @@ export class VolunteersService {
     if (!v) v = this.repo.create({ userId });
 
     const profileFraudFlagCount = await this.getProfileFraudFlagCount(userId);
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+  select is_blocked
+  from public.profiles
+  where id = $1
+  limit 1
+  `,
+      [userId],
+    );
 
+    const rows = Array.isArray(rowsUnknown)
+      ? (rowsUnknown as { is_blocked?: boolean | null }[])
+      : [];
+
+    const profile = rows[0] ?? null;
+
+    if (body.isAvailable === true && profile?.is_blocked === true) {
+      throw new ForbiddenException('Your account is permanently blocked. Please contact support.');
+    }
     if (body.isAvailable === true && profileFraudFlagCount >= 3) {
       throw new ForbiddenException(
         'Your account is temporarily restricted. Please contact support.',

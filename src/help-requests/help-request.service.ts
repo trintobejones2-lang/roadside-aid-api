@@ -466,6 +466,9 @@ export class HelpRequestsService {
   // Create Help Request
   // ----------------------------------------
   async createRequest(user: RequestUser, body: CreateHelpRequestDto) {
+    if (user.isBlocked) {
+      throw new ForbiddenException('Your account is permanently blocked. Please contact support.');
+    }
     if ((user.fraudFlagCount ?? 0) >= 3) {
       throw new ForbiddenException(
         'Your account is temporarily restricted. Please contact support.',
