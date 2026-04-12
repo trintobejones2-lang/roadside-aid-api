@@ -6,6 +6,7 @@ import { DispatchOffer, DispatchOfferStatus } from './dispatch-offer.entity';
 import { ForbiddenException, ConflictException } from '@nestjs/common';
 import { HelpRequest, HelpRequestStatus } from '../help-requests/help-request.entity';
 import { Claim, ClaimStatus } from '../help-requests/claim.entity';
+import { DispatchOfferHistory, DispatchOfferHistoryAction } from './dispatch-offer-history.entity';
 
 @Injectable()
 export class DispatchService {
@@ -15,6 +16,8 @@ export class DispatchService {
 
     @InjectRepository(DispatchOffer)
     private readonly dispatchOfferRepo: Repository<DispatchOffer>,
+    @InjectRepository(DispatchOfferHistory)
+    private readonly dispatchOfferHistoryRepo: Repository<DispatchOfferHistory>,
 
     @InjectRepository(HelpRequest)
     private readonly helpRequestRepo: Repository<HelpRequest>,
@@ -133,7 +136,13 @@ export class DispatchService {
       // 4) Accept this offer
       offer.status = DispatchOfferStatus.ACCEPTED;
       await offerRepo.save(offer);
-
+      await manager.getRepository(DispatchOfferHistory).save({
+        offerId: offer.id,
+        requestId: offer.requestId,
+        volunteerId: offer.volunteerId,
+        action: DispatchOfferHistoryAction.ACCEPTED,
+        notes: null,
+      });
       // 5) Claim the request
       request.status = HelpRequestStatus.CLAIMED;
       request.volunteer_accept_lat = lat;
@@ -199,7 +208,13 @@ export class DispatchService {
     offer.status = DispatchOfferStatus.DECLINED;
     offer.declineReason = declineReason ?? null;
     await this.dispatchOfferRepo.save(offer);
-
+    await this.dispatchOfferHistoryRepo.save({
+      offerId: offer.id,
+      requestId: offer.requestId,
+      volunteerId: offer.volunteerId,
+      action: DispatchOfferHistoryAction.DECLINED,
+      notes: declineReason ?? null,
+    });
     return { ok: true, offerId: offer.id, status: offer.status };
   }
 
