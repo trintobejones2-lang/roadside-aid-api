@@ -81,7 +81,31 @@ export class AdminController {
 
     return rows[0] ?? null;
   }
+  @Get('profiles/:id/fraud-history')
+  async getFraudHistory(@Param('id', new ParseUUIDPipe()) id: string) {
+    type FraudHistoryRow = {
+      id: string;
+      userId: string;
+      fraudFlagCount: number | null;
+      fraudReason: string | null;
+      action: string | null;
+      createdAt: string;
+    };
 
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+    select id, "userId", "fraudFlagCount", "fraudReason", action, "createdAt"
+    from public.fraud_history
+    where "userId" = $1
+    order by "createdAt" desc
+    `,
+      [id],
+    );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as FraudHistoryRow[]) : [];
+
+    return rows;
+  }
   // ✅ UPDATE fraud
   @Patch('profiles/:id/fraud')
   async updateFraud(
@@ -181,6 +205,32 @@ export class AdminController {
     );
 
     return { success: true };
+  }
+  @Get('profiles/blocked')
+  async listBlockedProfiles() {
+    type BlockedProfileRow = {
+      id: string;
+      role: string | null;
+      active_role: string | null;
+      can_request_help: boolean | null;
+      can_volunteer: boolean | null;
+      fraud_flag_count: number | null;
+      fraud_reason: string | null;
+      is_blocked: boolean | null;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+    select id, role, active_role, can_request_help, can_volunteer, fraud_flag_count, fraud_reason, is_blocked
+    from public.profiles
+    where is_blocked = true
+    order by id asc
+    `,
+    );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as BlockedProfileRow[]) : [];
+
+    return rows;
   }
   // Clear fraud flag (approve request)
   //@Patch('requests/:id/clear-flag')
