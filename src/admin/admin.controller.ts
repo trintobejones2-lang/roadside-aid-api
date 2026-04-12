@@ -106,6 +106,32 @@ export class AdminController {
 
     return rows;
   }
+  @Get('requests/:id/dispatch-history')
+  async getDispatchOfferHistory(@Param('id', new ParseUUIDPipe()) id: string) {
+    type DispatchOfferHistoryRow = {
+      id: string;
+      offer_id: string;
+      request_id: string;
+      volunteer_id: string;
+      action: string;
+      notes: string | null;
+      created_at: string;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(
+      `
+    select id, offer_id, request_id, volunteer_id, action, notes, created_at
+    from public.dispatch_offer_history
+    where request_id = $1
+    order by created_at desc
+    `,
+      [id],
+    );
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as DispatchOfferHistoryRow[]) : [];
+
+    return rows;
+  }
   // ✅ UPDATE fraud
   @Patch('profiles/:id/fraud')
   async updateFraud(
