@@ -12,27 +12,27 @@ export enum ClaimStatus {
 @Entity('claims')
 export class Claim {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column({ type: 'uuid' })
-  requestId: string;
+  requestId!: string;
 
   @Column({ type: 'uuid' })
-  volunteerId: string;
+  volunteerId!: string;
 
   @Column({ type: 'enum', enum: ClaimStatus, default: ClaimStatus.CLAIMED })
-  status: ClaimStatus;
+  status!: ClaimStatus;
 
   @Column({ type: 'int', nullable: true })
-  etaMinutes: number | null;
+  etaMinutes!: number | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  claimedAt: Date;
+  claimedAt!: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  arrivedAt: Date | null;
+  arrivedAt!: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  completedAt: Date | null;
+  completedAt!: Date | null;
 }

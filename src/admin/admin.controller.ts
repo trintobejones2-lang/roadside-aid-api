@@ -181,6 +181,17 @@ export class AdminController {
         [id],
       );
     }
+    // ✅ log FLAGGED action (when setting fraud)
+    if (fraudFlagCount >= 1) {
+      await this.dataSource.query(
+        `
+    insert into public.fraud_history
+      ("userId", "fraudFlagCount", "fraudReason", action)
+    values ($1, $2, $3, $4)
+    `,
+        [id, fraudFlagCount, fraudReason ?? null, 'FLAGGED'],
+      );
+    }
     await this.dataSource.query(
       `
     update public.profiles

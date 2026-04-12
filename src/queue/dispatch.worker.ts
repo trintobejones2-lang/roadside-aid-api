@@ -10,6 +10,7 @@ import {
   HelpType,
 } from '../help-requests/help-request.entity';
 import { DispatchOffer, DispatchOfferStatus } from './dispatch-offer.entity';
+import { DispatchOfferHistory, DispatchOfferHistoryAction } from './dispatch-offer-history.entity';
 import { DispatchQueue } from './dispatch.queue';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -25,6 +26,8 @@ export class DispatchWorker extends WorkerHost {
 
     @InjectRepository(DispatchOffer)
     private readonly dispatchOfferRepo: Repository<DispatchOffer>,
+    @InjectRepository(DispatchOfferHistory)
+    private readonly dispatchOfferHistoryRepo: Repository<DispatchOfferHistory>,
 
     private readonly notificationsService: NotificationsService,
 
@@ -260,6 +263,13 @@ export class DispatchWorker extends WorkerHost {
         });
 
         await this.dispatchOfferRepo.save(offer);
+        await this.dispatchOfferHistoryRepo.save({
+          offerId: offer.id,
+          requestId: offer.requestId,
+          volunteerId: offer.volunteerId,
+          action: DispatchOfferHistoryAction.CREATED,
+          notes: null,
+        });
 
         await this.notificationsService.sendToUser(volunteer.userId, {
           title: 'RoadsideAid',
@@ -356,6 +366,13 @@ export class DispatchWorker extends WorkerHost {
 
         offer.status = DispatchOfferStatus.EXPIRED;
         await this.dispatchOfferRepo.save(offer);
+        await this.dispatchOfferHistoryRepo.save({
+          offerId: offer.id,
+          requestId: offer.requestId,
+          volunteerId: offer.volunteerId,
+          action: DispatchOfferHistoryAction.EXPIRED,
+          notes: null,
+        });
 
         console.log('Dispatch offer expired:', {
           offerId: offer.id,

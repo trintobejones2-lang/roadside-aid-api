@@ -11,6 +11,7 @@ import { DispatchService } from './dispatch.service';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { Claim } from '../help-requests/claim.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { DispatchOfferHistory } from './dispatch-offer-history.entity';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       name: 'dispatch',
     }),
 
-    TypeOrmModule.forFeature([Volunteer, HelpRequest, DispatchOffer, Claim]),
+    TypeOrmModule.forFeature([Volunteer, HelpRequest, DispatchOffer, DispatchOfferHistory, Claim]),
     RealtimeModule,
   ],
   providers: [DispatchQueue, DispatchWorker, DispatchService],
