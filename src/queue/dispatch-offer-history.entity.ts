@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 export enum DispatchOfferHistoryAction {
   CREATED = 'CREATED',
@@ -14,24 +14,28 @@ export class DispatchOfferHistory {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'uuid' })
+  @Index()
+  @Column({ name: 'offer_id', type: 'uuid' })
   offerId!: string;
 
-  @Column({ type: 'uuid' })
+  @Index()
+  @Column({ name: 'request_id', type: 'uuid' })
   requestId!: string;
 
-  @Column({ type: 'uuid' })
+  @Index()
+  @Column({ name: 'volunteer_id', type: 'uuid' })
   volunteerId!: string;
 
   @Column({
     type: 'enum',
     enum: DispatchOfferHistoryAction,
+    enumName: 'dispatch_offer_history_action',
   })
   action!: DispatchOfferHistoryAction;
 
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }
