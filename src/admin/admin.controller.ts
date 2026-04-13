@@ -26,7 +26,7 @@ export class AdminController {
   //  private readonly helpRequestsService: HelpRequestsService,
   // private readonly volunteersService: VolunteersService,
   // ) {}
-
+  //CONTROLLER FOR ADMIN-ONLY ACTIONS (e.g. managing fraud flags, viewing flagged requests, etc.)
   // ✅ GET profile
   @Get('profiles/flagged')
   async listFlaggedProfiles() {
@@ -267,6 +267,54 @@ export class AdminController {
 
     const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as BlockedProfileRow[]) : [];
 
+    return rows;
+  }
+  @Get('dispatch/suspicious-volunteers')
+  async getSuspiciousVolunteers() {
+    type SuspiciousVolunteerRow = {
+      volunteer_id: string;
+      full_name: string | null;
+      decline_count: number;
+    };
+
+    const rowsUnknown: unknown = await this.dataSource.query(`
+  select 
+    doh.volunteer_id,
+    p.full_name,
+    count(*)::int as decline_count
+  from public.dispatch_offer_history doh
+  left join public.volunteers v
+    on v.id = doh.volunteer_id
+  left join public.profiles p
+    on p.id = v."userId"
+  where doh.action = 'DECLINED'
+  group by doh.volunteer_id, p.full_name
+  having count(*) >= 1
+  order by decline_count desc, doh.volunteer_id asc
+`);
+
+    const rows = Array.isArray(rowsUnknown) ? (rowsUnknown as SuspiciousVolunteerRow[]) : [];
+    for (const row of rows) {
+      if (row.decline_count >= 5) {
+        await this.dataSource.query(
+          `
+  update public.profiles
+  set fraud_flag_count = coalesce(fraud_flag_count, 0) + 1,
+      fraud_reason = 'Auto-flag: excessive declined offers'
+  where id = (
+    select v."userId"
+    from public.volunteers v
+    where v.id = $1
+  )
+    and (
+      fraud_reason is null
+      or fraud_reason not like '%Auto-flag: excessive declined offers%'
+    )
+  `,
+          [row.volunteer_id],
+        );
+      }
+    }
     return rows;
   }
   // Clear fraud flag (approve request)
