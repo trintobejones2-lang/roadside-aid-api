@@ -36,6 +36,11 @@ export class Volunteer {
 
   @Column({ type: 'int', default: 0 })
   fraud_flag_count!: number;
+  @Column({ type: 'float', default: 0 })
+  averageRating!: number;
+
+  @Column({ type: 'int', default: 0 })
+  ratingCount!: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
