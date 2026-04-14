@@ -274,9 +274,17 @@ export class HelpRequestsService {
     const volunteer = claim
       ? await this.volRepo.findOne({ where: { id: claim.volunteerId } })
       : null;
-    const profile: RequesterSelfieRow = await this.dataSource
+    type RequesterProfileRow =
+      | {
+          selfie_path: string | null;
+          full_name: string | null;
+        }
+      | null
+      | undefined;
+
+    const profile: RequesterProfileRow = await this.dataSource
       .createQueryBuilder()
-      .select('p.selfie_path', 'selfie_path')
+      .select(['p.selfie_path AS selfie_path', 'p.full_name AS full_name'])
       .from('profiles', 'p')
       .where('p.id = :id', { id: req.requesterId })
       .getRawOne();
@@ -299,6 +307,7 @@ export class HelpRequestsService {
       request: {
         ...req,
         requesterSelfiePath: profile?.selfie_path ?? null,
+        requesterName: profile?.full_name ?? null,
         volunteerSelfiePath: volunteerProfile?.selfie_path ?? null,
         volunteerName: volunteerProfile?.full_name ?? null,
         pickupLat: req.pickupLat != null ? Number(req.pickupLat) : null,
