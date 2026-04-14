@@ -125,4 +125,12 @@ export class HelpRequestsController {
   confirm(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.confirm(id, user.userId);
   }
+  @Post(':id/rate')
+  async rateRequest(
+    @Param('id') id: string,
+    @Body() body: { rating: number; review?: string },
+    @Req() req: any,
+  ) {
+    return this.helpRequestsService.rateRequest(id, req.user.userId, body.rating, body.review);
+  }
 }

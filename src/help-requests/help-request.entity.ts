@@ -104,6 +104,11 @@ export class HelpRequest {
 
   @Column({ type: 'timestamptz', nullable: true })
   completedAt!: Date | null;
+  @Column({ type: 'int', nullable: true })
+  rating!: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  review!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;

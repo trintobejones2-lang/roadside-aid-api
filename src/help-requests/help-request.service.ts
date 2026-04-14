@@ -20,12 +20,7 @@ import { getDistanceInMeters } from '../utils/distance';
 import { RequestUser } from '../common/types/request-user';
 
 const ENABLE_REPEAT_REQUEST_WARNING = false;
-type RequesterSelfieRow =
-  | {
-      selfie_path: string | null;
-    }
-  | null
-  | undefined;
+
 //CONSTRUCTOR// Helper to build map bounds from items
 @Injectable()
 export class HelpRequestsService {
@@ -74,7 +69,36 @@ export class HelpRequestsService {
 
     return !!recentConfirmation;
   }
+  async rateRequest(requestId: string, requesterId: string, rating: number, review?: string) {
+    const request = await this.reqRepo.findOne({
+      where: { id: requestId },
+    });
 
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    if (request.requesterId !== requesterId) {
+      throw new ForbiddenException('Not your request');
+    }
+
+    if (request.status !== HelpRequestStatus.COMPLETED) {
+      throw new BadRequestException('You can only rate completed requests');
+    }
+
+    if (rating < 1 || rating > 5) {
+      throw new BadRequestException('Rating must be between 1 and 5');
+    }
+
+    request.rating = rating;
+    request.review = review?.trim() || null;
+
+    const saved = await this.reqRepo.save(request);
+
+    return {
+      data: saved,
+    };
+  }
   async expireOldOpenRequests(expireMinutes = 30) {
     const openRequests = await this.reqRepo.find({
       where: { status: HelpRequestStatus.OPEN },
