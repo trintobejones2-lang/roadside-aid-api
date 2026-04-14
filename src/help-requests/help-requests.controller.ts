@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Req } from '@nestjs/common';
 
 import { HelpRequestsService } from './help-request.service';
 import { CreateHelpRequestDto } from './dto/create-help-request.dto';
@@ -126,11 +127,12 @@ export class HelpRequestsController {
     return this.service.confirm(id, user.userId);
   }
   @Post(':id/rate')
-  async rateRequest(
-    @Param('id') id: string,
+  @Roles('driver')
+  rateRequest(
+    @Req() req: { user: RequestUser },
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: { rating: number; review?: string },
-    @Req() req: any,
   ) {
-    return this.helpRequestsService.rateRequest(id, req.user.userId, body.rating, body.review);
+    return this.service.rateRequest(id, req.user.userId, body.rating, body.review);
   }
 }
