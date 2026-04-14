@@ -20,6 +20,12 @@ import { getDistanceInMeters } from '../utils/distance';
 import { RequestUser } from '../common/types/request-user';
 
 const ENABLE_REPEAT_REQUEST_WARNING = false;
+type RequesterSelfieRow =
+  | {
+      selfie_path: string | null;
+    }
+  | null
+  | undefined;
 
 //CONSTRUCTOR// Helper to build map bounds from items
 @Injectable()
@@ -260,6 +266,12 @@ export class HelpRequestsService {
   // ----------------------------------------
   async getById(requestId: string) {
     const req = await this.reqRepo.findOne({ where: { id: requestId } });
+    const profile: RequesterSelfieRow = await this.dataSource
+      .createQueryBuilder()
+      .select('p.selfie_path', 'selfie_path')
+      .from('profiles', 'p')
+      .where('p.id = :id', { id: req?.requesterId })
+      .getRawOne();
     if (!req) throw new NotFoundException('Request not found');
 
     const claim = await this.claimRepo.findOne({ where: { requestId } });
@@ -272,6 +284,7 @@ export class HelpRequestsService {
     return {
       request: {
         ...req,
+        requesterSelfiePath: profile?.selfie_path ?? null,
         pickupLat: req.pickupLat != null ? Number(req.pickupLat) : null,
         pickupLng: req.pickupLng != null ? Number(req.pickupLng) : null,
         volunteerLat: volunteer?.lastLat != null ? Number(volunteer.lastLat) : null,
