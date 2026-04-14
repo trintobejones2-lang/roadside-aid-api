@@ -7,7 +7,23 @@ import { ForbiddenException, ConflictException } from '@nestjs/common';
 import { HelpRequest, HelpRequestStatus } from '../help-requests/help-request.entity';
 import { Claim, ClaimStatus } from '../help-requests/claim.entity';
 import { DispatchOfferHistory, DispatchOfferHistoryAction } from './dispatch-offer-history.entity';
+type PendingOfferRow = {
+  id: string;
+  status: string;
+  createdat: string;
 
+  request_id: string | null;
+  requesterid: string | null;
+  requesterselfiepath: string | null;
+  type: string | null;
+  fueltype: string | null;
+  request_status: string | null;
+  request_createdat: string | null;
+  pickuplat: string | null;
+  pickuplng: string | null;
+  pickupaddress: string | null;
+  notes: string | null;
+};
 @Injectable()
 export class DispatchService {
   constructor(
@@ -227,34 +243,50 @@ export class DispatchService {
       throw new NotFoundException('Volunteer profile not found');
     }
 
-    const offers = await this.dispatchOfferRepo.find({
-      where: {
-        volunteerId: volunteer.id,
-        status: DispatchOfferStatus.PENDING,
-      },
-      relations: {
-        request: true,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    const offers: PendingOfferRow[] = await this.dispatchOfferRepo
+      .createQueryBuilder('offer')
+      .leftJoin('offer.request', 'request')
+      .leftJoin('profiles', 'p', 'p.id = request.requesterId')
+      .where('offer.volunteerId = :volunteerId', { volunteerId: volunteer.id })
+      .andWhere('offer.status = :status', { status: DispatchOfferStatus.PENDING })
+      .orderBy('offer.createdAt', 'DESC')
+      .select([
+        'offer.id AS id',
+        'offer.status AS status',
+        'offer.createdAt AS createdAt',
+
+        'request.id AS request_id',
+        'request.requesterId AS requesterId',
+        'request.type AS type',
+        'request.fuelType AS fuelType',
+        'request.status AS request_status',
+        'request.createdAt AS request_createdAt',
+        'request.pickupLat AS pickupLat',
+        'request.pickupLng AS pickupLng',
+        'request.pickupAddress AS pickupAddress',
+        'request.notes AS notes',
+
+        'p.selfie_path AS requesterSelfiePath',
+      ])
+      .getRawMany();
 
     return offers.map((offer) => ({
       id: offer.id,
       status: offer.status,
-      createdAt: offer.createdAt,
-      request: offer.request
+      createdAt: offer.createdat,
+      request: offer.request_id
         ? {
-            id: offer.request.id,
-            type: offer.request.type,
-            fuelType: offer.request.fuelType,
-            status: offer.request.status,
-            createdAt: offer.request.createdAt,
-            pickupLat: offer.request.pickupLat,
-            pickupLng: offer.request.pickupLng,
-            pickupAddress: offer.request.pickupAddress,
-            notes: offer.request.notes,
+            id: offer.request_id,
+            requesterId: offer.requesterid,
+            requesterSelfiePath: offer.requesterselfiepath,
+            type: offer.type,
+            fuelType: offer.fueltype,
+            status: offer.request_status,
+            createdAt: offer.request_createdat,
+            pickupLat: offer.pickuplat,
+            pickupLng: offer.pickuplng,
+            pickupAddress: offer.pickupaddress,
+            notes: offer.notes,
           }
         : null,
     }));

@@ -202,6 +202,11 @@ export class DispatchWorker extends WorkerHost {
       maxOffers,
       nearbyCount: nearbyVolunteers.length,
     });
+    const existingOffers = await this.dispatchOfferRepo.find({
+      where: { requestId: request.id },
+    });
+
+    const existingOfferMap = new Map(existingOffers.map((offer) => [offer.volunteerId, offer]));
     let createdOffers = 0;
     for (const volunteer of nearbyVolunteers.slice(0, maxOffers)) {
       try {
@@ -210,12 +215,7 @@ export class DispatchWorker extends WorkerHost {
           volunteerId: volunteer.id,
         });
 
-        const existingOffer = await this.dispatchOfferRepo.findOne({
-          where: {
-            requestId: request.id,
-            volunteerId: volunteer.id,
-          },
-        });
+        const existingOffer = existingOfferMap.get(volunteer.id);
 
         if (
           existingOffer &&
@@ -263,6 +263,7 @@ export class DispatchWorker extends WorkerHost {
         });
 
         await this.dispatchOfferRepo.save(offer);
+        existingOfferMap.set(volunteer.id, offer);
         await this.dispatchOfferHistoryRepo.save({
           offerId: offer.id,
           requestId: offer.requestId,
@@ -271,7 +272,7 @@ export class DispatchWorker extends WorkerHost {
           notes: null,
         });
 
-        await this.notificationsService.sendToUser(volunteer.userId, {
+        void this.notificationsService.sendToUser(volunteer.userId, {
           title: 'RoadsideAid',
           body: `New ${request.type} request nearby. Tap to open offers.`,
           url: '/open-requests',
@@ -291,7 +292,7 @@ export class DispatchWorker extends WorkerHost {
           volunteerId: offer.volunteerId,
           status: offer.status,
         });
-        this.realtime.server.emit('dispatch_offer_created', {
+        this.realtime.server.to(`user:${volunteer.userId}`).emit('dispatch_offer_created', {
           offerId: offer.id,
           requestId: offer.requestId,
           volunteerId: offer.volunteerId,

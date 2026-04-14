@@ -1,14 +1,23 @@
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
-export class RealtimeGateway {
+export class RealtimeGateway implements OnGatewayConnection {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
+
+  handleConnection(client: Socket) {
+    const userId = client.handshake.query.userId as string;
+
+    if (userId) {
+      void client.join(`user:${userId}`);
+      console.log(`Client joined room user:${userId}`);
+    }
+  }
 
   broadcastNewRequest(request: any) {
     this.server.emit('request_created', request);
