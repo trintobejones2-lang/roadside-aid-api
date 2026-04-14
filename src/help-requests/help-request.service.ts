@@ -905,8 +905,8 @@ export class HelpRequestsService {
 
     const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
 
-    const MAX_DISTANCE_METERS = 150;
-    const FLAG_DISTANCE_METERS = 100;
+    const MAX_DISTANCE_METERS = 1000;
+    const FLAG_DISTANCE_METERS = 900;
 
     if (distance > MAX_DISTANCE_METERS) {
       throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
