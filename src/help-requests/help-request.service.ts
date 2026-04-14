@@ -93,6 +93,33 @@ export class HelpRequestsService {
     request.rating = rating;
     request.review = review?.trim() || null;
 
+    const claim = await this.claimRepo.findOne({
+      where: { requestId },
+    });
+
+    if (!claim) {
+      throw new NotFoundException('Claim not found');
+    }
+
+    const volunteer = await this.volRepo.findOne({
+      where: { id: claim.volunteerId },
+    });
+
+    if (!volunteer) {
+      throw new NotFoundException('Volunteer not found');
+    }
+
+    const currentCount = volunteer.ratingCount ?? 0;
+    const currentAverage = Number(volunteer.averageRating ?? 0);
+
+    const newCount = currentCount + 1;
+    const newAverage = (currentAverage * currentCount + rating) / newCount;
+
+    volunteer.ratingCount = newCount;
+    volunteer.averageRating = Number(newAverage.toFixed(2));
+
+    await this.volRepo.save(volunteer);
+
     const saved = await this.reqRepo.save(request);
 
     return {
@@ -334,6 +361,8 @@ export class HelpRequestsService {
         requesterName: profile?.full_name ?? null,
         volunteerSelfiePath: volunteerProfile?.selfie_path ?? null,
         volunteerName: volunteerProfile?.full_name ?? null,
+        volunteerAverageRating: volunteer?.averageRating ?? 0,
+        volunteerRatingCount: volunteer?.ratingCount ?? 0,
         pickupLat: req.pickupLat != null ? Number(req.pickupLat) : null,
         pickupLng: req.pickupLng != null ? Number(req.pickupLng) : null,
         volunteerLat: volunteer?.lastLat != null ? Number(volunteer.lastLat) : null,
@@ -806,8 +835,8 @@ export class HelpRequestsService {
 
     const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
 
-    const MAX_DISTANCE_METERS = 150;
-    const FLAG_DISTANCE_METERS = 100;
+    const MAX_DISTANCE_METERS = 1000;
+    const FLAG_DISTANCE_METERS = 900;
 
     if (distance > MAX_DISTANCE_METERS) {
       throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
@@ -905,8 +934,8 @@ export class HelpRequestsService {
 
     const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
 
-    const MAX_DISTANCE_METERS = 150;
-    const FLAG_DISTANCE_METERS = 100;
+    const MAX_DISTANCE_METERS = 1000;
+    const FLAG_DISTANCE_METERS = 900;
 
     if (distance > MAX_DISTANCE_METERS) {
       throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
