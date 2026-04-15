@@ -22,12 +22,6 @@ export class Confirmation {
   @Column({ type: 'timestamptz', nullable: true })
   confirmedAt!: Date | null;
 
-  @Column({ name: 'requester_rating', type: 'int', nullable: true })
-  requesterRating!: number | null;
-
-  @Column({ name: 'requester_review', type: 'text', nullable: true })
-  requesterReview!: string | null;
-
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
