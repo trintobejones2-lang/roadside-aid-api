@@ -110,10 +110,10 @@ export class HelpRequest {
   @Column({ type: 'text', nullable: true })
   review!: string | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'requester_rating', type: 'int', nullable: true })
   requesterRating!: number | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'requester_review', type: 'text', nullable: true })
   requesterReview!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
