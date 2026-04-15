@@ -520,6 +520,8 @@ export class HelpRequestsService {
     type HistoryRequesterRow =
       | {
           full_name: string | null;
+          average_rating: number | null;
+          rating_count: number | null;
         }
       | null
       | undefined;
@@ -530,8 +532,13 @@ export class HelpRequestsService {
 
         const profile: HistoryRequesterRow = await this.dataSource
           .createQueryBuilder()
-          .select(['p.full_name AS full_name'])
+          .select([
+            'p.full_name AS full_name',
+            'v."averageRating" AS average_rating',
+            'v."ratingCount" AS rating_count',
+          ])
           .from('profiles', 'p')
+          .leftJoin('volunteers', 'v', 'v."userId" = p.id')
           .where('p.id = :id', { id: req.requesterId })
           .getRawOne();
 
@@ -539,6 +546,8 @@ export class HelpRequestsService {
           request: {
             ...req,
             requesterName: profile?.full_name ?? null,
+            requesterAverageRating: profile?.average_rating ?? 0,
+            requesterRatingCount: profile?.rating_count ?? 0,
           },
           claim: c,
         };
@@ -549,8 +558,6 @@ export class HelpRequestsService {
       items: items.filter((x) => x !== null),
       total,
     };
-
-    return { items, total };
   }
   async listFlaggedRequests() {
     const requests = await this.reqRepo.find({
