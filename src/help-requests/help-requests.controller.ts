@@ -135,9 +135,10 @@ export class HelpRequestsController {
   ) {
     return this.service.rateRequest(id, req.user.userId, body.rating, body.review);
   }
-  @Post(':id/rate-requester')
+  @Post('rate-requester/:id')
+  @Roles('volunteer')
   rateRequester(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: { rating: number; review?: string },
     @Req() req: { user: { id: string } },
   ) {

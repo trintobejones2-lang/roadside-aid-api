@@ -37,7 +37,11 @@ export enum HelpRequestStatus {
 export class HelpRequest {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+  @Column({ name: 'requester_rating', type: 'int', nullable: true })
+  requesterRating!: number | null;
 
+  @Column({ name: 'requester_review', type: 'text', nullable: true })
+  requesterReview!: string | null;
   @Column({ type: 'uuid' })
   requesterId!: string;
 
@@ -109,12 +113,6 @@ export class HelpRequest {
 
   @Column({ type: 'text', nullable: true })
   review!: string | null;
-
-  @Column({ name: 'requester_rating', type: 'int', nullable: true })
-  requesterRating!: number | null;
-
-  @Column({ name: 'requester_review', type: 'text', nullable: true })
-  requesterReview!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
