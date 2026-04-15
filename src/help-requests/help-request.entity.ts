@@ -110,6 +110,12 @@ export class HelpRequest {
   @Column({ type: 'text', nullable: true })
   review!: string | null;
 
+  @Column({ type: 'int', nullable: true })
+  requesterRating!: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  requesterReview!: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

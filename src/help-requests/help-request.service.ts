@@ -469,7 +469,52 @@ export class HelpRequestsService {
 
     return { items, total, sort: safeSort };
   }
+  async rateRequester(requestId: string, volunteerId: string, rating: number, review?: string) {
+    const request = await this.reqRepo.findOne({
+      where: { id: requestId },
+    });
 
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    if (request.status !== HelpRequestStatus.COMPLETED) {
+      throw new BadRequestException('Requester can only be rated after completion');
+    }
+
+    if (!request.requesterId) {
+      throw new BadRequestException('Requester not found on this request');
+    }
+
+    if (rating < 1 || rating > 5) {
+      throw new BadRequestException('Rating must be between 1 and 5');
+    }
+
+    const claim = await this.claimRepo.findOne({
+      where: { requestId },
+    });
+
+    if (!claim) {
+      throw new NotFoundException('Claim not found');
+    }
+
+    if (claim.volunteerId !== volunteerId) {
+      throw new ForbiddenException('Only the assigned volunteer can rate this requester');
+    }
+
+    request.requesterRating = rating;
+    request.requesterReview = review?.trim() || null;
+
+    await this.reqRepo.save(request);
+
+    return {
+      success: true,
+      requestId,
+      requesterId: request.requesterId,
+      rating,
+      review: request.requesterReview,
+    };
+  }
   // ----------------------------------------
   // MINE (Paginated)
   // ----------------------------------------

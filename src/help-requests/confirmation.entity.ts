@@ -10,21 +10,27 @@ import {
 @Entity('confirmations')
 export class Confirmation {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column({ type: 'uuid' })
-  requestId: string;
+  requestId!: string;
 
   @Column({ type: 'boolean', default: false })
-  confirmedByRequester: boolean;
+  confirmedByRequester!: boolean;
 
   @Column({ type: 'timestamptz', nullable: true })
-  confirmedAt: Date | null;
+  confirmedAt!: Date | null;
+
+  @Column({ type: 'int', nullable: true })
+  requesterRating!: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  requesterReview!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
