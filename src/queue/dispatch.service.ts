@@ -11,6 +11,7 @@ type PendingOfferRow = {
   id: string;
   status: string;
   createdat: string;
+  priority: boolean | null;
 
   request_id: string | null;
   requesterid: string | null;
@@ -258,6 +259,7 @@ export class DispatchService {
         'offer.id AS id',
         'offer.status AS status',
         'offer.createdAt AS createdAt',
+        'offer.priority AS priority',
 
         'request.id AS request_id',
         'request.requesterId AS requesterId',
@@ -286,6 +288,7 @@ export class DispatchService {
       id: offer.id,
       status: offer.status,
       createdAt: offer.createdat,
+      priority: offer.priority,
       request: offer.request_id
         ? {
             id: offer.request_id,

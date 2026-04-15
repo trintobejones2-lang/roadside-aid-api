@@ -157,13 +157,26 @@ export class DispatchWorker extends WorkerHost {
 
         if (!matches) return null;
 
+        const isTopHelper = Number(v.averageRating ?? 0) >= 4.8 && Number(v.ratingCount ?? 0) >= 10;
+
+        const priorityScore = isTopHelper ? Math.max(0, distanceKm - 3) : distanceKm;
+
         return {
           volunteer: v,
           distanceKm,
+          priorityScore,
         };
       })
-      .filter((item): item is { volunteer: Volunteer; distanceKm: number } => item !== null)
-      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .filter(
+        (
+          item,
+        ): item is {
+          volunteer: Volunteer;
+          distanceKm: number;
+          priorityScore: number;
+        } => item !== null,
+      )
+      .sort((a, b) => a.priorityScore - b.priorityScore)
       .map((item) => item.volunteer);
 
     console.log(
@@ -255,11 +268,15 @@ export class DispatchWorker extends WorkerHost {
 
         const expiresAt = new Date(Date.now() + 30 * 1000);
 
+        const isTopHelper =
+          Number(volunteer.averageRating ?? 0) >= 4.8 && Number(volunteer.ratingCount ?? 0) >= 10;
+
         const offer = this.dispatchOfferRepo.create({
           requestId: request.id,
           volunteerId: volunteer.id,
           status: DispatchOfferStatus.PENDING,
           expiresAt,
+          priority: isTopHelper, // 👈 ADD THIS
         });
 
         await this.dispatchOfferRepo.save(offer);
