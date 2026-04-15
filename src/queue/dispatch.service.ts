@@ -15,6 +15,8 @@ type PendingOfferRow = {
   request_id: string | null;
   requesterid: string | null;
   requestername: string | null;
+  requesteraveragerating: number | null;
+  requesterratingcount: number | null;
   requesterselfiepath: string | null;
   type: string | null;
   fueltype: string | null;
@@ -248,6 +250,7 @@ export class DispatchService {
       .createQueryBuilder('offer')
       .leftJoin('offer.request', 'request')
       .leftJoin('profiles', 'p', 'p.id = request.requesterId')
+      .leftJoin('volunteers', 'v', 'v."userId" = request."requesterId"')
       .where('offer.volunteerId = :volunteerId', { volunteerId: volunteer.id })
       .andWhere('offer.status = :status', { status: DispatchOfferStatus.PENDING })
       .orderBy('offer.createdAt', 'DESC')
@@ -272,6 +275,10 @@ export class DispatchService {
 
         'p.selfie_path AS requesterSelfiePath',
         'p.full_name AS requesterName',
+        'v."averageRating" AS requesterAverageRating',
+        'v."ratingCount" AS requesterRatingCount',
+        'v."averageRating" AS requesterAverageRating',
+        'v."ratingCount" AS requesterRatingCount',
       ])
       .getRawMany();
 
@@ -284,6 +291,8 @@ export class DispatchService {
             id: offer.request_id,
             requesterId: offer.requesterid,
             requesterName: offer.requestername,
+            requesterAverageRating: offer.requesteraveragerating,
+            requesterRatingCount: offer.requesterratingcount,
             requesterSelfiePath: offer.requesterselfiepath,
             type: offer.type,
             fuelType: offer.fueltype,
