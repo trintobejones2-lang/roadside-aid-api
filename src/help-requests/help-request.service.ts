@@ -499,7 +499,10 @@ export class HelpRequestsService {
     }
 
     const claim = await this.claimRepo.findOne({
-      where: { requestId },
+      where: {
+        requestId,
+        volunteerId: volunteer.id,
+      },
     });
 
     if (!claim) {
