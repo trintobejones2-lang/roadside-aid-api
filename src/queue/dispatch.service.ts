@@ -14,6 +14,7 @@ type PendingOfferRow = {
 
   request_id: string | null;
   requesterid: string | null;
+  requestername: string | null;
   requesterselfiepath: string | null;
   type: string | null;
   fueltype: string | null;
@@ -267,6 +268,10 @@ export class DispatchService {
         'request.notes AS notes',
 
         'p.selfie_path AS requesterSelfiePath',
+        'request.notes AS notes',
+
+        'p.selfie_path AS requesterSelfiePath',
+        'p.full_name AS requesterName',
       ])
       .getRawMany();
 
@@ -278,6 +283,7 @@ export class DispatchService {
         ? {
             id: offer.request_id,
             requesterId: offer.requesterid,
+            requesterName: offer.requestername,
             requesterSelfiePath: offer.requesterselfiepath,
             type: offer.type,
             fuelType: offer.fueltype,
