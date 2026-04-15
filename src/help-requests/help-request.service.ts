@@ -517,13 +517,38 @@ export class HelpRequestsService {
     });
 
     const reqMap = new Map(requests.map((r) => [r.id, r]));
+    type HistoryRequesterRow =
+      | {
+          full_name: string | null;
+        }
+      | null
+      | undefined;
+    const items = await Promise.all(
+      claims.map(async (c) => {
+        const req = reqMap.get(c.requestId);
+        if (!req) return null;
 
-    const items = claims
-      .map((c) => ({
-        request: reqMap.get(c.requestId) ?? null,
-        claim: c,
-      }))
-      .filter((x) => x.request !== null);
+        const profile: HistoryRequesterRow = await this.dataSource
+          .createQueryBuilder()
+          .select(['p.full_name AS full_name'])
+          .from('profiles', 'p')
+          .where('p.id = :id', { id: req.requesterId })
+          .getRawOne();
+
+        return {
+          request: {
+            ...req,
+            requesterName: profile?.full_name ?? null,
+          },
+          claim: c,
+        };
+      }),
+    );
+
+    return {
+      items: items.filter((x) => x !== null),
+      total,
+    };
 
     return { items, total };
   }
