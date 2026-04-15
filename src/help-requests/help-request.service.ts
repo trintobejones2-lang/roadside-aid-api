@@ -441,7 +441,31 @@ export class HelpRequestsService {
 
     const take = Math.min(Math.max(limit, 1), 50);
     const start = (Math.max(page, 1) - 1) * take;
-    const items = filtered.slice(start, start + take);
+    const pagedItems = filtered.slice(start, start + take);
+    type RequesterNameRow =
+      | {
+          full_name: string | null;
+        }
+      | null
+      | undefined;
+    const items = await Promise.all(
+      pagedItems.map(async (item) => {
+        const profile: RequesterNameRow = await this.dataSource
+          .createQueryBuilder()
+          .select(['p.full_name AS full_name'])
+          .from('profiles', 'p')
+          .where('p.id = :id', { id: item.request.requesterId })
+          .getRawOne();
+
+        return {
+          ...item,
+          request: {
+            ...item.request,
+            requesterName: profile?.full_name ?? null,
+          },
+        };
+      }),
+    );
 
     return { items, total, sort: safeSort };
   }
