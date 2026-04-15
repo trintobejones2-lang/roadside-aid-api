@@ -490,6 +490,14 @@ export class HelpRequestsService {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
+    const volunteer = await this.volRepo.findOne({
+      where: { userId: volunteerId },
+    });
+
+    if (!volunteer) {
+      throw new NotFoundException('Volunteer not found');
+    }
+
     const claim = await this.claimRepo.findOne({
       where: { requestId },
     });
@@ -498,7 +506,7 @@ export class HelpRequestsService {
       throw new NotFoundException('Claim not found');
     }
 
-    if (claim.volunteerId !== volunteerId) {
+    if (claim.volunteerId !== volunteer.id) {
       throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
 
