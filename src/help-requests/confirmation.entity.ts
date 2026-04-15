@@ -22,10 +22,10 @@ export class Confirmation {
   @Column({ type: 'timestamptz', nullable: true })
   confirmedAt!: Date | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'requester_rating', type: 'int', nullable: true })
   requesterRating!: number | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'requester_review', type: 'text', nullable: true })
   requesterReview!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
