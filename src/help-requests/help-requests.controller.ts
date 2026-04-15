@@ -135,6 +135,7 @@ export class HelpRequestsController {
   ) {
     return this.service.rateRequest(id, req.user.userId, body.rating, body.review);
   }
+
   @Post(':id/rate-requester')
   @Roles('volunteer')
   rateRequester(
