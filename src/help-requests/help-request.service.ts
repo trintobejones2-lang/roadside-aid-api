@@ -501,7 +501,7 @@ export class HelpRequestsService {
     const claim = await this.claimRepo.findOne({
       where: {
         requestId,
-        volunteerId: volunteerId,
+        volunteerId: volunteer.id,
       },
     });
 
@@ -947,7 +947,7 @@ export class HelpRequestsService {
 
     const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
 
-    const MAX_DISTANCE_METERS = 150;
+    const MAX_DISTANCE_METERS = 1000;
     const FLAG_DISTANCE_METERS = 900;
 
     if (distance > MAX_DISTANCE_METERS) {
