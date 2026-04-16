@@ -70,6 +70,7 @@ export class HelpRequestsService {
     return !!recentConfirmation;
   }
   async rateRequest(requestId: string, requesterId: string, rating: number, review?: string) {
+    console.log('🔥 RATE REQUESTER HIT 🔥');
     const request = await this.reqRepo.findOne({
       where: { id: requestId },
     });

@@ -137,7 +137,6 @@ export class HelpRequestsController {
   }
 
   @Post(':id/rate-requester')
-  @Roles('volunteer')
   rateRequester(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: { rating: number; review?: string },
