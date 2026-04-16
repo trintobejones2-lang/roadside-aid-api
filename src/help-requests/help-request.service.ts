@@ -947,7 +947,7 @@ export class HelpRequestsService {
 
     const distance = getDistanceInMeters(lat, lng, pickupLat, pickupLng);
 
-    const MAX_DISTANCE_METERS = 1000;
+    const MAX_DISTANCE_METERS = 150;
     const FLAG_DISTANCE_METERS = 900;
 
     if (distance > MAX_DISTANCE_METERS) {
