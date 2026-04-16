@@ -490,7 +490,9 @@ export class HelpRequestsService {
     if (rating < 1 || rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
-
+    if (request.requesterRating !== null) {
+      throw new BadRequestException('Requester already rated');
+    }
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerId },
     });
