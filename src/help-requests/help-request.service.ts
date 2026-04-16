@@ -508,7 +508,8 @@ export class HelpRequestsService {
     if (!claim) {
       throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
-
+    console.log('RATE REQUESTER claim.volunteerId =', claim.volunteerId);
+    console.log('RATE REQUESTER volunteer.id =', volunteer.id);
     if (claim.volunteerId !== volunteer.id) {
       throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
