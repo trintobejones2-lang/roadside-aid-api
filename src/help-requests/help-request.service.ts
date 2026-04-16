@@ -498,11 +498,13 @@ export class HelpRequestsService {
     if (!volunteer) {
       throw new NotFoundException('Volunteer not found');
     }
-
+    console.log('RATE REQUESTER requestId =', requestId);
+    console.log('RATE REQUESTER volunteer.id =', volunteer.id);
     const claim = await this.claimRepo.findOne({
       where: {
         requestId,
-        volunteerId: volunteer.id, // IMPORTANT
+        volunteerId: volunteer.id,
+        status: ClaimStatus.COMPLETED,
       },
     });
 
@@ -512,7 +514,7 @@ export class HelpRequestsService {
     console.log('RATE REQUESTER claim.volunteerId =', claim.volunteerId);
     console.log('RATE REQUESTER volunteer.id =', volunteer.id);
     // (claim.volunteerId !== volunteer.id) {
-     //hrow new ForbiddenException('Only the assigned volunteer can rate this requester');
+    //Throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     //
 
     request.requesterRating = rating;
@@ -847,7 +849,7 @@ export class HelpRequestsService {
         const claim = await claimRepo.findOne({
           where: { requestId: id },
         });
-        console.log('ALL CLAIMS FOR REQUEST:', claims;
+        console.log('ALL CLAIMS FOR REQUEST:', claim);
         if (claim) {
           const volunteer = await this.volRepo.findOne({
             where: { id: claim.volunteerId },
