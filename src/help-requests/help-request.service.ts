@@ -501,12 +501,12 @@ export class HelpRequestsService {
     const claim = await this.claimRepo.findOne({
       where: {
         requestId,
-        volunteerId: volunteer.id,
+        volunteerId: volunteer.id, // IMPORTANT
       },
     });
 
     if (!claim) {
-      throw new NotFoundException('Claim not found');
+      throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
 
     if (claim.volunteerId !== volunteer.id) {
