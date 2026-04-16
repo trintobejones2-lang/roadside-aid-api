@@ -7,9 +7,7 @@ import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {
-    console.log('AUTH CONTROLLER LOADED');
-  }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('switch-role')
   @UseGuards(SupabaseAuthGuard)

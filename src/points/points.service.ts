@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { PointsLedger, PointsEventType } from './points-ledger.entity';
 import { Rank } from './rank.entity';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class PointsService {
@@ -60,18 +61,18 @@ export class PointsService {
     const repo = manager.getRepository(PointsLedger);
 
     // ✅ ANTI-CHEAT #1 — Cooldown check (must wait 30 minutes between earning points)
-    //const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    // const recentAward = await repo
-    // .createQueryBuilder('l')
-    //.where('l.userId = :userId', { userId })
-    //.andWhere('l.createdAt > :since', { since: thirtyMinutesAgo })
-    //.getOne();
+    const recentAward = await repo
+      .createQueryBuilder('l')
+      .where('l.userId = :userId', { userId })
+      .andWhere('l.createdAt > :since', { since: thirtyMinutesAgo })
+      .getOne();
 
-    // if (recentAward) {
-    // console.warn(`Anti-cheat cooldown: user ${userId} tried to earn points too soon`);
-    // throw new BadRequestException('You must wait 30 minutes between earning points');
-    // }
+    if (recentAward) {
+      console.warn(`Anti-cheat cooldown: user ${userId} tried to earn points too soon`);
+      throw new BadRequestException('You must wait 30 minutes between earning points');
+    }
 
     // ✅ ANTI-CHEAT #2 — Daily points limit (max 50 points per day)
     // const startOfDay = new Date();

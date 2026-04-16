@@ -15,7 +15,6 @@ export class RealtimeGateway implements OnGatewayConnection {
 
     if (userId) {
       void client.join(`user:${userId}`);
-      console.log(`Client joined room user:${userId}`);
     }
   }
 

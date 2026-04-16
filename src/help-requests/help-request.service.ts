@@ -70,7 +70,6 @@ export class HelpRequestsService {
     return !!recentConfirmation;
   }
   async rateRequest(requestId: string, requesterId: string, rating: number, review?: string) {
-    console.log('🔥 RATE REQUESTER HIT 🔥');
     const request = await this.reqRepo.findOne({
       where: { id: requestId },
     });
@@ -500,9 +499,7 @@ export class HelpRequestsService {
     if (!volunteer) {
       throw new NotFoundException('Volunteer not found');
     }
-    console.log('RATE REQUESTER requestId =', requestId);
-    console.log('RATE REQUESTER incoming userId =', volunteerId);
-    console.log('RATE REQUESTER volunteer.id =', volunteer.id);
+
     const claim = await this.claimRepo.findOne({
       where: {
         requestId,
@@ -514,8 +511,7 @@ export class HelpRequestsService {
     if (!claim) {
       throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
-    console.log('RATE REQUESTER claim.volunteerId =', claim.volunteerId);
-    console.log('RATE REQUESTER volunteer.id =', volunteer.id);
+
     // (claim.volunteerId !== volunteer.id) {
     //Throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     //
@@ -852,7 +848,7 @@ export class HelpRequestsService {
         const claim = await claimRepo.findOne({
           where: { requestId: id },
         });
-        console.log('ALL CLAIMS FOR REQUEST:', claim);
+
         if (claim) {
           const volunteer = await this.volRepo.findOne({
             where: { id: claim.volunteerId },
@@ -916,7 +912,6 @@ export class HelpRequestsService {
   }
 
   async markArrived(id: string, volunteerUserId: string, lat: number, lng: number) {
-    console.log('RATE REQUESTER volunteerId (userId) =', volunteerUserId);
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerUserId },
     });

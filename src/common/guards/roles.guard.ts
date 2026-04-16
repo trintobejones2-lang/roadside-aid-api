@@ -22,10 +22,6 @@ export class RolesGuard implements CanActivate {
     const canRequestHelp = req.user?.canRequestHelp;
     const canVolunteer = req.user?.canVolunteer;
 
-    console.log('ROLES GUARD requiredRoles:', requiredRoles);
-    console.log('ROLES GUARD canRequestHelp:', canRequestHelp);
-    console.log('ROLES GUARD canVolunteer:', canVolunteer);
-
     if (requiredRoles.length === 0) return true;
 
     if (requiredRoles.includes('admin') && req.user?.isAdmin) {
