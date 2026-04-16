@@ -511,9 +511,9 @@ export class HelpRequestsService {
     }
     console.log('RATE REQUESTER claim.volunteerId =', claim.volunteerId);
     console.log('RATE REQUESTER volunteer.id =', volunteer.id);
-    if (claim.volunteerId !== volunteer.id) {
-      throw new ForbiddenException('Only the assigned volunteer can rate this requester');
-    }
+    // (claim.volunteerId !== volunteer.id) {
+     //hrow new ForbiddenException('Only the assigned volunteer can rate this requester');
+    //
 
     request.requesterRating = rating;
     request.requesterReview = review?.trim() || null;
@@ -847,7 +847,7 @@ export class HelpRequestsService {
         const claim = await claimRepo.findOne({
           where: { requestId: id },
         });
-
+        console.log('ALL CLAIMS FOR REQUEST:', claims;
         if (claim) {
           const volunteer = await this.volRepo.findOne({
             where: { id: claim.volunteerId },
