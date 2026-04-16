@@ -140,8 +140,8 @@ export class HelpRequestsController {
   rateRequester(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: { rating: number; review?: string },
-    @Req() req: { user: { id: string } },
+    @Req() req: { user: RequestUser },
   ) {
-    return this.service.rateRequester(id, req.user.id, body.rating, body.review);
+    return this.service.rateRequester(id, req.user.userId, body.rating, body.review);
   }
 }
