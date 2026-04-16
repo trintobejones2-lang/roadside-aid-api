@@ -18,6 +18,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { DispatchQueue } from '../queue/dispatch.queue';
 import { getDistanceInMeters } from '../utils/distance';
 import { RequestUser } from '../common/types/request-user';
+import { request } from 'https';
 
 const ENABLE_REPEAT_REQUEST_WARNING = false;
 
@@ -1122,13 +1123,21 @@ export class HelpRequestsService {
         where: { id: requestId },
         lock: { mode: 'pessimistic_write' },
       });
+      if (!request) {
+        throw new NotFoundException('Request not found');
+      }
 
-      if (!req) throw new NotFoundException('Request not found');
-      if (req.requesterId !== requesterId) throw new ForbiddenException('Not your request');
+      if (!req) {
+        throw new NotFoundException('Request not found');
+      }
+
+      if (req.requesterId !== requesterId) {
+        throw new ForbiddenException('Not your request');
+      }
+
       if (req.status !== HelpRequestStatus.COMPLETED) {
         throw new ConflictException('Not completed yet');
       }
-
       const claim = await claimRepo.findOne({
         where: { requestId, status: ClaimStatus.COMPLETED },
       });
