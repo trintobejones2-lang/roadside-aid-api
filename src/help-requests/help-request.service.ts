@@ -509,7 +509,7 @@ export class HelpRequestsService {
       throw new NotFoundException('Claim not found');
     }
 
-    if (claim.volunteerId !== volunteerId) {
+    if (claim.volunteerId !== volunteer.id) {
       throw new ForbiddenException('Only the assigned volunteer can rate this requester');
     }
 
