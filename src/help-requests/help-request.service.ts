@@ -499,6 +499,7 @@ export class HelpRequestsService {
       throw new NotFoundException('Volunteer not found');
     }
     console.log('RATE REQUESTER requestId =', requestId);
+    console.log('RATE REQUESTER incoming userId =', volunteerId);
     console.log('RATE REQUESTER volunteer.id =', volunteer.id);
     const claim = await this.claimRepo.findOne({
       where: {
@@ -913,6 +914,7 @@ export class HelpRequestsService {
   }
 
   async markArrived(id: string, volunteerUserId: string, lat: number, lng: number) {
+    console.log('RATE REQUESTER volunteerId (userId) =', volunteerUserId);
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerUserId },
     });
