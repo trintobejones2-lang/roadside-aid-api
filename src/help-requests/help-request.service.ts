@@ -35,7 +35,7 @@ export class HelpRequestsService {
     private realtime: RealtimeGateway,
     private dispatchQueue: DispatchQueue,
   ) {}
-  private isClaimStale(request: HelpRequest, staleMinutes = 15): boolean {
+  private isClaimStale(request: HelpRequest, staleMinutes = 1): boolean {
     if (!request.updatedAt) return false;
 
     const staleMs = staleMinutes * 60 * 1000;
@@ -191,7 +191,7 @@ export class HelpRequestsService {
     });
 
     for (const request of candidates) {
-      if (!this.isClaimStale(request, 15)) continue;
+      if (!this.isClaimStale(request, 1)) continue;
 
       request.status = HelpRequestStatus.OPEN;
       const claim = await this.claimRepo.findOne({
