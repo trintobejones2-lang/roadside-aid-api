@@ -194,6 +194,15 @@ export class HelpRequestsService {
       if (!this.isClaimStale(request, 15)) continue;
 
       request.status = HelpRequestStatus.OPEN;
+      const claim = await this.claimRepo.findOne({
+        where: { requestId: request.id },
+        order: { claimedAt: 'DESC' },
+      });
+
+      if (claim) {
+        claim.status = ClaimStatus.CANCELLED;
+        await this.claimRepo.save(claim);
+      }
 
       await this.reqRepo.save(request);
     }
@@ -316,11 +325,14 @@ export class HelpRequestsService {
   // Get Full Request View
   // ----------------------------------------
   async getById(requestId: string) {
+    await this.reopenStaleClaims();
     const req = await this.reqRepo.findOne({ where: { id: requestId } });
 
     if (!req) throw new NotFoundException('Request not found');
 
-    const claim = await this.claimRepo.findOne({ where: { requestId } });
+    const claim = await this.claimRepo.findOne({
+      where: { requestId, status: ClaimStatus.CLAIMED },
+    });
     const confirmation = await this.confRepo.findOne({ where: { requestId } });
 
     const volunteer = claim
