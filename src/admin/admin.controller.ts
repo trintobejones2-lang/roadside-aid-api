@@ -14,18 +14,18 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 
-//import { HelpRequestsService } from '../help-requests/help-request.service';
-//import { VolunteersService } from '../volunteers/volunteers.service';
+import { HelpRequestsService } from '../help-requests/help-request.service';
+import { VolunteersService } from '../volunteers/volunteers.service';
 
 @Controller('admin')
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 @Roles('admin')
 export class AdminController {
-  constructor(private readonly dataSource: DataSource) {}
-  // private readonly dataSource: DataSource,
-  //  private readonly helpRequestsService: HelpRequestsService,
-  // private readonly volunteersService: VolunteersService,
-  // ) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly helpRequestsService: HelpRequestsService,
+    private readonly volunteersService: VolunteersService,
+  ) {}
   //CONTROLLER FOR ADMIN-ONLY ACTIONS (e.g. managing fraud flags, viewing flagged requests, etc.)
   // ✅ GET profile
   @Get('profiles/flagged')
@@ -318,16 +318,16 @@ export class AdminController {
     return rows;
   }
   // Clear fraud flag (approve request)
-  //@Patch('requests/:id/clear-flag')
-  // clearFlag(@Param('id') id: string) {
-  //  return this.helpRequestsService.clearFraudFlag(id);
-  // }
+  @Patch('requests/:id/clear-flag')
+  clearFlag(@Param('id') id: string) {
+    return this.helpRequestsService.clearFraudFlag(id);
+  }
 
   // Mark as fraud
-  // @Patch('requests/:id/confirm-fraud')
-  //confirmFraud(@Param('id') id: string) {
-  //  return this.helpRequestsService.confirmFraud(id);
-  //}
+  @Patch('requests/:id/confirm-fraud')
+  confirmFraud(@Param('id') id: string) {
+    return this.helpRequestsService.confirmFraud(id);
+  }
 
   // Warn user
   //@Patch('users/:userId/warn')

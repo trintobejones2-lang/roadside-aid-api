@@ -15,6 +15,7 @@ import { AdminController } from './admin/admin.controller';
   imports: [
     AuthModule,
     NotificationsModule,
+    HelpRequestsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
