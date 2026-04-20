@@ -10,12 +10,14 @@ import { QueueModule } from './queue/queue.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AdminController } from './admin/admin.controller';
 //import { FraudHistory } from './fraud-history/fraud-history.entity';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
     AuthModule,
     NotificationsModule,
     HelpRequestsModule,
+    MessagesModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],

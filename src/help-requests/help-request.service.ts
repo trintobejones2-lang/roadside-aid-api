@@ -673,6 +673,52 @@ export class HelpRequestsService {
   }
   // Admin marks request as confirmed fraud, which cancels the request and increments fraud flag on volunteer
   async confirmFraud(id: string) {
+    const request = await this.reqRepo.findOne({
+      where: { id },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    const claim = await this.claimRepo.findOne({
+      where: { requestId: id },
+    });
+
+    if (!claim) {
+      return this.reqRepo.update(id, {
+        status: HelpRequestStatus.CANCELLED,
+        anti_cheat_flag: true,
+      });
+    }
+
+    const volunteer = await this.volRepo.findOne({
+      where: { id: claim.volunteerId },
+    });
+
+    if (!volunteer) {
+      return this.reqRepo.update(id, {
+        status: HelpRequestStatus.CANCELLED,
+        anti_cheat_flag: true,
+      });
+    }
+
+    const nextFraudCount = (volunteer.fraud_flag_count ?? 0) + 1;
+
+    await this.volRepo.update(volunteer.id, {
+      fraud_flag_count: nextFraudCount,
+    });
+
+    await this.dataSource
+      .createQueryBuilder()
+      .update('profiles')
+      .set({
+        fraud_flag_count: nextFraudCount,
+        is_blocked: nextFraudCount >= 3,
+      })
+      .where('id = :id', { id: volunteer.userId })
+      .execute();
+
     return this.reqRepo.update(id, {
       status: HelpRequestStatus.CANCELLED,
       anti_cheat_flag: true,
