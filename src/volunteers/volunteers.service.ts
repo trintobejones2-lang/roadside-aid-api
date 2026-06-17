@@ -114,18 +114,18 @@ export class VolunteersService {
     }
 
     if (body.lat != undefined) {
-      // Defensive check (DTO should catch it, but good for safety if pipes change)
-      if (body.lat < -90 || body.lat > 90) {
-        throw new BadRequestException('lat must be between -90 and 90');
+      if (!Number.isFinite(body.lat) || body.lat < -90 || body.lat > 90) {
+        throw new BadRequestException('lat must be a valid number between -90 and 90');
       }
-      // numeric -> string behavior in TypeORM/Postgres
+
       v.lastLat = String(body.lat);
     }
 
     if (body.lng != undefined) {
-      if (body.lng < -180 || body.lng > 180) {
-        throw new BadRequestException('lng must be between -180 and 180');
+      if (!Number.isFinite(body.lng) || body.lng < -180 || body.lng > 180) {
+        throw new BadRequestException('lng must be a valid number between -180 and 180');
       }
+
       v.lastLng = String(body.lng);
     }
 
@@ -146,12 +146,12 @@ export class VolunteersService {
   }
 
   async updateLocation(userId: string, lat: number, lng: number) {
-    if (lat < -90 || lat > 90) {
-      throw new BadRequestException('lat must be between -90 and 90');
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      throw new BadRequestException('lat must be a valid number between -90 and 90');
     }
 
-    if (lng < -180 || lng > 180) {
-      throw new BadRequestException('lng must be between -180 and 180');
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+      throw new BadRequestException('lng must be a valid number between -180 and 180');
     }
 
     let v = await this.repo.findOne({ where: { userId } });

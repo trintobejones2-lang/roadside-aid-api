@@ -3,13 +3,13 @@ import { FuelType, HelpType } from '../help-request.entity';
 
 export class CreateHelpRequestDto {
   @IsEnum(HelpType)
-  type: HelpType;
+  type!: HelpType;
 
   @IsNumber()
-  pickupLat: number;
+  pickupLat!: number;
 
   @IsNumber()
-  pickupLng: number;
+  pickupLng!: number;
 
   @IsOptional()
   @IsString()
