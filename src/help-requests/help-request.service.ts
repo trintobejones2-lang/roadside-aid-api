@@ -379,8 +379,19 @@ export class HelpRequestsService {
         volunteerRatingCount: volunteer?.ratingCount ?? 0,
         pickupLat: req.pickupLat != null ? Number(req.pickupLat) : null,
         pickupLng: req.pickupLng != null ? Number(req.pickupLng) : null,
-        volunteerLat: volunteer?.lastLat != null ? Number(volunteer.lastLat) : null,
-        volunteerLng: volunteer?.lastLng != null ? Number(volunteer.lastLng) : null,
+        volunteerLat:
+          volunteer?.lastLat != null
+            ? Number(volunteer.lastLat)
+            : req.volunteer_accept_lat != null
+              ? Number(req.volunteer_accept_lat)
+              : null,
+
+        volunteerLng:
+          volunteer?.lastLng != null
+            ? Number(volunteer.lastLng)
+            : req.volunteer_accept_lng != null
+              ? Number(req.volunteer_accept_lng)
+              : null,
       },
       claim: claim ?? null,
       confirmation: confirmation
