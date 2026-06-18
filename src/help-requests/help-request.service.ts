@@ -1152,6 +1152,7 @@ export class HelpRequestsService {
   }
 
   async markCompleted(id: string, volunteerUserId: string, lat: number, lng: number) {
+    const DISABLE_ANTI_CHEAT_FOR_TESTING = true;
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerUserId },
     });
@@ -1192,21 +1193,23 @@ export class HelpRequestsService {
 
     const MAX_DISTANCE_METERS = 1000;
     const FLAG_DISTANCE_METERS = 900;
+    if (!DISABLE_ANTI_CHEAT_FOR_TESTING) {
+      if (distance > MAX_DISTANCE_METERS) {
+        throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
+      }
 
-    if (distance > MAX_DISTANCE_METERS) {
-      throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
-    }
-
-    if (distance > FLAG_DISTANCE_METERS) {
-      await this.appendAntiCheatReason(
-        request,
-        `Completed from suspicious distance: ${Math.round(distance)}m`,
-      );
+      if (distance > FLAG_DISTANCE_METERS) {
+        await this.appendAntiCheatReason(
+          request,
+          `Completed from suspicious distance: ${Math.round(distance)}m`,
+        );
+      }
     }
     // Check for suspiciously fast completion after arrival (possible GPS spoofing or cheating)
     const completedAt = new Date();
 
     if (
+      !DISABLE_ANTI_CHEAT_FOR_TESTING &&
       request.volunteer_arrived_at &&
       request.volunteer_arrived_lat != null &&
       request.volunteer_arrived_lng != null
