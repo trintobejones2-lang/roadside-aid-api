@@ -121,6 +121,11 @@ export class HelpRequestsController {
   cancel(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.service.cancelRequest(id, user.userId);
   }
+  @Post(':id/release')
+  @Roles('volunteer')
+  release(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.service.releaseRequest(id, user.userId);
+  }
   @Post(':id/confirm')
   @Roles('driver')
   confirm(@ReqUser() user: RequestUser, @Param('id', new ParseUUIDPipe()) id: string) {

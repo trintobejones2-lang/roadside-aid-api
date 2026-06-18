@@ -262,6 +262,69 @@ export class HelpRequestsService {
       };
     });
   }
+  async releaseRequest(requestId: string, volunteerUserId: string) {
+    return this.dataSource.transaction(async (m) => {
+      const reqRepo = m.getRepository(HelpRequest);
+      const claimRepo = m.getRepository(Claim);
+      const volRepo = m.getRepository(Volunteer);
+
+      const request = await reqRepo.findOne({
+        where: { id: requestId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!request) {
+        throw new NotFoundException('Request not found');
+      }
+
+      if (
+        request.status !== HelpRequestStatus.CLAIMED &&
+        request.status !== HelpRequestStatus.EN_ROUTE &&
+        request.status !== HelpRequestStatus.ARRIVED
+      ) {
+        throw new BadRequestException(`Cannot release request in status ${request.status}`);
+      }
+
+      const volunteer = await volRepo.findOne({
+        where: { userId: volunteerUserId },
+      });
+
+      if (!volunteer) {
+        throw new ForbiddenException('Volunteer profile not found');
+      }
+
+      const claim = await claimRepo.findOne({
+        where: { requestId },
+        order: { claimedAt: 'DESC' },
+      });
+
+      if (!claim || claim.volunteerId !== volunteer.id) {
+        throw new ForbiddenException('Not your assigned request');
+      }
+
+      claim.status = ClaimStatus.CANCELLED;
+      await claimRepo.save(claim);
+
+      request.status = HelpRequestStatus.OPEN;
+      request.completedAt = null;
+
+      const savedRequest = await reqRepo.save(request);
+
+      this.realtime.broadcastStatusUpdated({
+        requestId: savedRequest.id,
+        status: savedRequest.status,
+      });
+
+      await this.dispatchQueue.addStatusUpdateJob({
+        requestId: savedRequest.id,
+        status: savedRequest.status,
+      });
+
+      return {
+        data: savedRequest,
+      };
+    });
+  }
   // ----------------------------------------
   // Utility: Postgres Unique Violation Check
   // ----------------------------------------
