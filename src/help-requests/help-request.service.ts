@@ -229,7 +229,9 @@ export class HelpRequestsService {
 
       if (
         request.status !== HelpRequestStatus.OPEN &&
-        request.status !== HelpRequestStatus.CLAIMED
+        request.status !== HelpRequestStatus.CLAIMED &&
+        request.status !== HelpRequestStatus.EN_ROUTE &&
+        request.status !== HelpRequestStatus.ARRIVED
       ) {
         throw new BadRequestException(`Cannot cancel request in status ${request.status}`);
       }
