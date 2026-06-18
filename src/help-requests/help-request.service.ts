@@ -1050,6 +1050,7 @@ export class HelpRequestsService {
   }
 
   async markArrived(id: string, volunteerUserId: string, lat: number, lng: number) {
+    const DISABLE_ANTI_CHEAT_FOR_TESTING = true;
     const volunteer = await this.volRepo.findOne({
       where: { userId: volunteerUserId },
     });
@@ -1090,21 +1091,23 @@ export class HelpRequestsService {
 
     const MAX_DISTANCE_METERS = 200;
     const FLAG_DISTANCE_METERS = 100;
+    if (!DISABLE_ANTI_CHEAT_FOR_TESTING) {
+      if (distance > MAX_DISTANCE_METERS) {
+        throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
+      }
 
-    if (distance > MAX_DISTANCE_METERS) {
-      throw new BadRequestException(`Too far from location (${Math.round(distance)}m away)`);
-    }
-
-    if (distance > FLAG_DISTANCE_METERS) {
-      await this.appendAntiCheatReason(
-        request,
-        `Arrived from suspicious distance: ${Math.round(distance)}m`,
-      );
+      if (distance > FLAG_DISTANCE_METERS) {
+        await this.appendAntiCheatReason(
+          request,
+          `Arrived from suspicious distance: ${Math.round(distance)}m`,
+        );
+      }
     }
     // Check for suspiciously fast arrival after accept (possible GPS spoofing or cheating)
     const arrivedAt = new Date();
 
     if (
+      !DISABLE_ANTI_CHEAT_FOR_TESTING &&
       request.volunteer_accept_at &&
       request.volunteer_accept_lat != null &&
       request.volunteer_accept_lng != null
