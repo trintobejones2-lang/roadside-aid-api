@@ -298,12 +298,18 @@ export class HelpRequestsService {
         order: { claimedAt: 'DESC' },
       });
 
-      if (!claim || claim.volunteerId !== volunteer.id) {
+      const volunteerMatchesClaim = claim?.volunteerId === volunteer.id;
+      const volunteerMatchesRequest =
+        request.volunteer_accept_lat != null && request.volunteer_accept_lng != null;
+
+      if (!volunteerMatchesClaim && !volunteerMatchesRequest) {
         throw new ForbiddenException('Not your assigned request');
       }
 
-      claim.status = ClaimStatus.CANCELLED;
-      await claimRepo.save(claim);
+      if (claim) {
+        claim.status = ClaimStatus.CANCELLED;
+        await claimRepo.save(claim);
+      }
 
       request.status = HelpRequestStatus.OPEN;
       request.completedAt = null;
