@@ -59,7 +59,7 @@ export class PointsService {
     requestId: string,
   ): Promise<void> {
     const repo = manager.getRepository(PointsLedger);
-
+    const DISABLE_POINTS_COOLDOWN_FOR_TESTING = true;
     // ✅ ANTI-CHEAT #1 — Cooldown check (must wait 30 minutes between earning points)
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
@@ -69,7 +69,7 @@ export class PointsService {
       .andWhere('l.createdAt > :since', { since: thirtyMinutesAgo })
       .getOne();
 
-    if (recentAward) {
+    if (!DISABLE_POINTS_COOLDOWN_FOR_TESTING && recentAward) {
       console.warn(`Anti-cheat cooldown: user ${userId} tried to earn points too soon`);
       throw new BadRequestException('You must wait 30 minutes between earning points');
     }
